@@ -1,0 +1,12 @@
+{
+  "name": "el-cencerro-de-la-sede",
+  "private": true,
+  "description": "Periódico semanal del C.D. Villa de Buitrago para Instagram",
+  "scripts": {
+    "construir": "node scripts/construir-edicion.js",
+    "renderizar": "node scripts/renderizar.js"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}
