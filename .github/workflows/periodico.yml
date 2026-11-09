@@ -1,0 +1,102 @@
+name: El Cencerro de la Sede
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # lunes a las 9:00 en Madrid (horario de invierno)
+  workflow_dispatch:
+    inputs:
+      diagnostico:
+        description: 'Volcar en el log cómo vienen los datos reales (1 = sí, 0 = no)'
+        default: '1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cencerro
+  cancel-in-progress: false
+
+jobs:
+  periodico:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo del periódico
+        uses: actions/checkout@v4
+
+      - name: Traer Actas-Villa (resultados)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/Actas-Villa
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: fuentes/actas
+
+      - name: Traer Pruebas-carteles-partidos (calendarios y escudos)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/Pruebas-carteles-partidos
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: fuentes/carteles
+
+      - name: Traer repo del telediario (lesionados)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ${{ github.repository_owner }}/NOMBRE-REPO-TELEDIARIO
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: fuentes/telediario
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y fonts-noto-color-emoji
+
+      - name: Escudo y mascota del club
+        run: |
+          f=$(find fuentes/actas -name 'escudo-club.png' | head -1); [ -n "$f" ] && cp "$f" escudo-club.png || true
+          f=$(find fuentes/actas -iname '*victoria*local*.png' | head -1); [ -n "$f" ] && cp "$f" mascota-victoria-local.png || true
+
+      - name: Construir la edición
+        id: construir
+        env:
+          DIAGNOSTICO: ${{ github.event.inputs.diagnostico || '0' }}
+        run: node scripts/construir-edicion.js
+
+      - name: Maquetar las páginas
+        if: steps.construir.outputs.hay_edicion == 'true'
+        run: node scripts/renderizar.js
+
+      - name: Guardar las páginas como artefacto
+        if: steps.construir.outputs.hay_edicion == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cencerro
+          path: |
+            salida/*.png
+            salida/pie-instagram.txt
+
+      - name: Enviar a Telegram
+        if: steps.construir.outputs.hay_edicion == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TEMA_ID: ${{ secrets.TELEGRAM_TEMA_ID }}
+        run: node scripts/enviar-telegram.js
+
+      - name: Cerrar la edición (estado y archivo)
+        if: steps.construir.outputs.hay_edicion == 'true'
+        run: node scripts/cerrar-edicion.js
+
+      - name: Guardar cambios en el repo
+        if: steps.construir.outputs.hay_edicion == 'true'
+        run: |
+          git config user.name "El Cencerro"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A estado.json datos fotos archivo salida/edicion.js salida/pie-instagram.txt
+          git diff --cached --quiet || git commit -m "Cencerro Nº $(node -p "require('./estado.json').numero")"
+          git push
