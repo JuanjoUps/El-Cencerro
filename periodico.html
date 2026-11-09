@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Periódico de la jornada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all';window.fuentesCargadas&&window.fuentesCargadas()"
+  href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:wght@700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Oswald:wght@500;700&display=swap">
+<style>
+:root{
+  --verde:#174B2B; --oro:#F4B400; --papel:#F4EEDF; --tinta:#1b1a17; --gris:#6b6457; --linea:#2b2925; --regla:#bdb3a0;
+  --e:0.35;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#262626;color:#eee;font-family:system-ui,-apple-system,sans-serif;padding:16px}
+
+/* ---------- Panel de pruebas (no sale en las páginas) ---------- */
+.panel{max-width:760px;margin:0 auto 18px;background:#1b1b1b;border:1px solid #3a3a3a;border-radius:12px;padding:14px;display:grid;gap:10px}
+.panel h1{font-size:16px;color:var(--oro)}
+.panel p{font-size:13px;color:#aaa;line-height:1.4}
+.panel textarea{width:100%;min-height:110px;background:#111;color:#eee;border:1px solid #444;border-radius:8px;padding:10px;font:14px/1.4 system-ui}
+.panel .fila-botones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.panel button,.panel label.boton{background:var(--verde);color:#fff;border:1px solid var(--oro);border-radius:8px;padding:9px 12px;font-size:14px;cursor:pointer}
+.panel input[type=file]{display:none}
+.panel label.check{font-size:14px;color:#ddd;display:flex;gap:6px;align-items:center}
+
+/* ---------- Contenedor de páginas ---------- */
+.paginas{display:flex;flex-direction:column;align-items:center;gap:20px}
+.marco{position:relative;overflow:hidden;width:calc(1080px * var(--e));height:calc(1350px * var(--e));box-shadow:0 10px 30px rgba(0,0,0,.55)}
+.pagina{
+  position:absolute;top:0;left:0;width:1080px;height:1350px;transform:scale(var(--e));transform-origin:0 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.55), transparent 55%),
+    radial-gradient(ellipse at 90% 95%, rgba(150,120,60,.12), transparent 60%),
+    var(--papel);
+  color:var(--tinta);display:flex;flex-direction:column;padding:40px 52px 36px;
+  font-family:'Source Serif 4',Georgia,serif;overflow:hidden
+}
+
+/* ---------- Barra superior de páginas interiores ---------- */
+.barra{display:flex;align-items:baseline;justify-content:space-between;border-bottom:5px double var(--linea);padding-bottom:8px;margin-bottom:14px;flex-shrink:0}
+.barra-cab{font-family:'Abril Fatface','Playfair Display',Georgia,serif;font-size:40px;line-height:1}
+.barra-sec,.num-pag{font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:2px;text-transform:uppercase;color:var(--gris)}
+
+.cuerpo{flex:1;min-height:0;position:relative;overflow:hidden;display:flex;flex-direction:column}
+
+/* ---------- Filas y artículos ---------- */
+.fila{display:grid;gap:0 26px;padding:14px 0 16px;border-top:2px solid var(--linea);flex-shrink:0}
+.fila:first-child{border-top:none;padding-top:2px}
+.fila > .art + .art{border-left:1px solid var(--regla);padding-left:26px;margin-left:-13px}
+.art{min-width:0;display:flex;flex-direction:column}
+
+.kicker-fila{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.kicker{background:var(--verde);color:var(--oro);font-family:'Oswald',sans-serif;font-weight:700;font-size:21px;letter-spacing:2px;text-transform:uppercase;padding:2px 10px}
+.kicker-info{font-family:'Oswald',sans-serif;font-size:19px;color:var(--gris);text-transform:uppercase;letter-spacing:1px}
+.titular{font-family:'Playfair Display',Georgia,serif;font-weight:900;line-height:1.05;letter-spacing:-.3px;margin-bottom:12px}
+
+/* Marcador compacto */
+.mc{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:8px;margin-bottom:10px}
+.mc .lado{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;min-width:0}
+.mc .nom{max-width:100%;overflow:hidden}
+.art.breve .mc .sello{font-size:16px;padding:3px 6px;letter-spacing:1px}
+.mc img{width:62px;height:62px;object-fit:contain}
+.mc .nom{font-family:'Oswald',sans-serif;font-weight:500;font-size:16px;text-transform:uppercase;line-height:1.05}
+.mc .lado.nuestro .nom{color:var(--verde);font-weight:700}
+.mc .res{display:flex;align-items:center;gap:6px;background:var(--verde);border:3px solid var(--oro);padding:2px 12px;margin-top:6px}
+.mc .res span{font-family:'Oswald',sans-serif;font-weight:700;font-size:50px;line-height:1.05;color:#fff}
+.mc .res span.nuestro{color:var(--oro)}
+.mc .res i{font-style:normal;font-family:'Oswald';font-size:34px;color:#fff}
+.goleadores{font-size:21px;line-height:1.3;margin-bottom:10px}
+.goleadores b,.ficha b,.clasi-linea b{font-family:'Oswald';font-weight:500;letter-spacing:1px;text-transform:uppercase;font-size:.85em;color:var(--verde)}
+.dato{border-top:3px solid var(--oro);border-bottom:1px solid var(--linea);padding:8px 0;margin-bottom:10px}
+.dato .et{font-family:'Oswald';font-weight:700;letter-spacing:2px;font-size:16px;color:var(--verde)}
+.dato .txt{font-family:'Playfair Display',serif;font-weight:700;font-size:25px;line-height:1.15}
+.ficha{font-size:19px;line-height:1.35;color:#333;margin-bottom:8px}
+.clasi-linea{font-size:20px;padding-top:4px}
+.lateral .mc img{width:52px;height:52px}
+.lateral .mc .res{padding:2px 9px}
+.lateral .mc .res span{font-size:40px}
+.lateral .mc .res i{font-size:28px}
+.lateral .mc .nom{font-size:15px}
+/* Encaje por columnas: cada pieza va colocada en el hueco libre más alto */
+.cuerpo .art{position:absolute;top:0}
+.art.izq{border-left:1px solid var(--regla);padding-left:13px}
+.art.abajo{border-top:2px solid var(--linea);padding-top:12px}
+.firma{font-family:'Oswald',sans-serif;font-size:17px;letter-spacing:1.5px;text-transform:uppercase;color:var(--verde);margin:4px 0 6px}
+.firma b{color:var(--tinta)}
+
+/* Crónica */
+.cronica{column-gap:28px;column-rule:1px solid var(--regla);column-fill:balance;text-align:justify;hyphens:auto;line-height:1.36;overflow:hidden}
+.cronica p{margin-bottom:.35em}
+.cronica p+p{text-indent:1.1em}
+.cronica:not(.continua) p:first-child::first-letter{float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:3.1em;line-height:.82;margin:.06em .08em 0 0;color:var(--verde)}
+.sigue{font-family:'Oswald';font-size:.72em;color:var(--verde);white-space:nowrap;letter-spacing:1px}
+
+/* Artículos grandes y medianos: lateral con datos + columna principal */
+.art.grande .cuerpo-art,.art.mediana .cuerpo-art{display:grid;flex:1;min-height:0;gap:0 24px}
+.art.grande .cuerpo-art{grid-template-columns:290px 1fr}
+.art.mediana .cuerpo-art{grid-template-columns:250px 1fr}
+.lateral{display:flex;flex-direction:column;min-width:0}
+.principal{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.principal .cronica{flex:1;min-height:0}
+.art.breve .cronica{flex:none}
+
+/* Fotos de cualquier forma: si la proporción encaja, recorte; si no, entera con fondo difuminado */
+.foto{position:relative;overflow:hidden;background:linear-gradient(135deg,#2f5f40,#174B2B 60%,#0e331d);flex-shrink:0;margin-bottom:8px}
+.foto.vacia::before{content:'FOTO';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Oswald';color:rgba(244,180,0,.5);font-size:34px;letter-spacing:4px}
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.foto img.fondo{display:none;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);filter:blur(26px) brightness(.55) saturate(1.1)}
+.foto.encaje img.fondo{display:block}
+.foto.encaje img.prin{object-fit:contain}
+.foto.vacia img{display:none}
+.foto .pie{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-size:17px;padding:26px 14px 8px;font-style:italic;z-index:2}
+.art.grande .foto{height:400px}
+.art.mediana .foto{height:290px}
+
+/* Breves */
+.art.breve .titular{font-size:31px}
+.art.breve .goleadores{font-size:20px}
+.art.breve .cronica{font-size:23px;line-height:1.32}
+.art.breve .ficha{font-size:18px}
+.enfermeria{font-size:19px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--regla)}
+.enfermeria b{font-family:'Oswald';font-weight:500;letter-spacing:1px;text-transform:uppercase;font-size:.85em;color:#a33}
+
+/* Continuación */
+.art.continua .cronica{flex:1;min-height:0}
+
+/* Hueco patrocinador */
+.anuncio{border:3px dashed var(--verde);height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(244,180,0,.12)}
+.anuncio .a1{font-family:'Oswald';font-weight:700;font-size:34px;letter-spacing:3px;color:var(--verde)}
+.anuncio .a2{font-size:20px;font-style:italic;color:var(--gris)}
+
+/* ---------- Portada ---------- */
+.portada .cabecera{display:grid;grid-template-columns:110px 1fr 110px;align-items:center;gap:10px}
+.portada .cabecera img{width:100px;height:100px;object-fit:contain}
+.art.manual .cuerpo-art{grid-template-columns:1fr !important}
+.art.manual .kicker{background:var(--oro);color:var(--verde)}
+.art.breve.manual .foto{height:220px}
+.art.mediana.manual .foto{height:320px}
+.portada .cabecera > div{min-width:0}
+.portada .nombre{overflow:hidden;font-family:'Abril Fatface','Playfair Display',Georgia,serif;font-size:118px;letter-spacing:1px;line-height:1;text-align:center;white-space:nowrap}
+.portada .lema{text-align:center;font-style:italic;font-size:21px;color:var(--gris);margin-top:2px}
+.portada .fecha{display:flex;justify-content:space-between;border-top:2px solid var(--linea);border-bottom:5px double var(--linea);margin:10px 0 14px;padding:6px 4px;font-family:'Oswald';font-size:20px;letter-spacing:2px;text-transform:uppercase}
+.portada .foto{flex:1;min-height:0;margin-bottom:12px}
+.portada .titular{margin-bottom:6px}
+.portada .entradilla{font-size:24px;line-height:1.3;color:#333;margin-bottom:12px}
+.res-tit{font-family:'Oswald';font-weight:700;font-size:21px;letter-spacing:3px;border-bottom:2px solid var(--linea);margin-bottom:8px;display:flex;justify-content:space-between}
+.res-tit span{color:var(--gris);font-weight:500}
+.mini-grid{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}
+.mini{border:1.5px solid var(--linea);padding:4px 8px;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.35)}
+.mini-cat{font-family:'Oswald';font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:var(--verde)}
+.mini-res{display:flex;align-items:center;gap:8px}
+.mini-res img{width:40px;height:40px;object-fit:contain}
+.mini-res span{font-family:'Oswald';font-weight:700;font-size:34px;line-height:1.05}
+.mini-res span.nuestro{color:var(--verde)}
+.desliza{text-align:right;font-family:'Oswald';font-size:19px;letter-spacing:2px;color:var(--verde);margin-top:8px}
+
+/* ---------- Clasificaciones (compactas, 2 por fila) ---------- */
+.clasi-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 30px;align-content:start}
+.tabla-bloque td{font-size:21px;height:36px}
+.tabla-bloque td.eq{font-size:20px}
+.tabla-bloque td.eq img{width:26px;height:26px}
+tr.salto td{height:14px;font-size:14px;color:var(--gris);border-bottom:none;line-height:1}
+.proximo{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'Oswald',sans-serif;font-size:20px}
+.proximo b{font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--verde);font-size:17px}
+.proximo img{width:30px;height:30px;object-fit:contain}
+.proximo em{font-style:normal;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--gris);border:1px solid var(--regla);padding:0 6px}
+.tabla-bloque .kicker-fila{margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-family:'Oswald',sans-serif}
+th{background:var(--verde);color:var(--oro);font-weight:500;font-size:15px;letter-spacing:1px;padding:3px 4px;text-align:center}
+th.eq{text-align:left}
+td{font-size:18px;padding:1px 4px;text-align:center;border-bottom:1px solid #cfc5b0;height:27px}
+td.eq{text-align:left;font-family:'Source Serif 4',serif;font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+td.eq img{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px}
+td.pts{font-weight:700}
+tr.propio td{background:rgba(244,180,0,.38);font-weight:700}
+tr.propio td.eq{color:var(--verde)}
+
+/* ---------- Portada: "Dentro" y portada sin foto ---------- */
+.dentro{border-top:2px solid var(--linea);padding-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:0 22px}
+.dentro .t{border-left:1px solid var(--regla);padding-left:12px}
+.dentro .t:first-child{border-left:none;padding-left:0}
+.dentro .c{font-family:'Oswald';font-weight:700;font-size:16px;letter-spacing:2px;color:var(--verde);text-transform:uppercase}
+.dentro .h{font-family:'Playfair Display',serif;font-weight:700;font-size:23px;line-height:1.12}
+.dentro .r{font-family:'Oswald';font-size:20px;color:var(--gris)}
+.grafica{flex:1;min-height:0;margin-bottom:12px;background:linear-gradient(160deg,#1f5c36,#174B2B 55%,#0b2a17);position:relative;display:flex;align-items:center;justify-content:center;gap:40px;overflow:hidden}
+.grafica::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 60px,transparent 60px 120px)}
+.grafica .esc{width:190px;height:190px;object-fit:contain;position:relative;filter:drop-shadow(0 8px 14px rgba(0,0,0,.4))}
+.grafica .num{font-family:'Oswald';font-weight:700;font-size:170px;color:#fff;line-height:1;position:relative;text-shadow:0 6px 20px rgba(0,0,0,.35)}
+.grafica .num b{color:var(--oro);font-weight:700}
+.grafica .cat{position:absolute;top:22px;left:0;right:0;text-align:center;font-family:'Oswald';font-weight:700;letter-spacing:6px;color:var(--oro);font-size:30px}
+.grafica .masc{position:absolute;right:10px;bottom:0;height:72%;object-fit:contain}
+
+/* ---------- Página de resultados ---------- */
+.res-lista{display:flex;flex-direction:column}
+.res-fila{display:grid;grid-template-columns:200px 1fr;align-items:center;border-bottom:1px solid var(--regla);padding:9px 0}
+.res-fila .cat{font-family:'Oswald';font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--verde)}
+.res-fila .cat small{display:block;font-weight:500;font-size:15px;letter-spacing:1px;color:var(--gris)}
+.marc-linea{display:grid;grid-template-columns:minmax(0,1fr) 54px auto 54px minmax(0,1fr);align-items:center;gap:12px}
+.marc-linea img{width:54px;height:54px;object-fit:contain}
+.marc-linea .n{font-family:'Oswald';font-size:22px;text-transform:uppercase;line-height:1.05;overflow-wrap:anywhere}
+.marc-linea .n.l{text-align:right}
+.marc-linea .n.nuestro{color:var(--verde);font-weight:700}
+.marc-linea .s{font-family:'Oswald';font-weight:700;font-size:44px;background:var(--verde);color:#fff;padding:0 14px;border:3px solid var(--oro);min-width:120px;text-align:center}
+.marc-linea .s b{color:var(--oro)}
+.res-fila.descansa .marc-linea{display:block;font-family:'Playfair Display',serif;font-style:italic;font-size:26px;color:var(--gris)}
+
+/* Categorías con solo 3 resultados posibles (benjamín, prebenjamín) */
+.sello{font-family:'Oswald';font-weight:700;letter-spacing:2px;background:var(--verde);color:var(--oro);border:3px solid var(--oro);padding:4px 12px;font-size:24px;text-transform:uppercase;white-space:nowrap}
+.sello.E{background:#5b5545;color:#fff}
+.sello.D{background:#fff;color:var(--verde);border-color:var(--verde)}
+.mc .sello{margin-top:12px;font-size:20px;padding:3px 8px}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Prueba del periódico de la jornada</h1>
+  <p>Datos de ejemplo (el Infantil lleva tu crónica real del 13-1). Cada partido ocupa el sitio que se gana: con crónica larga es noticia grande, con crónica corta o foto es mediana, y sin nada va como breve en una columna. Se encajan varios por página.</p>
+  <textarea id="txtCronica" placeholder="Pega una crónica tal cual te la manda el entrenador…"></textarea>
+  <div class="fila-botones">
+    <button id="btnProbar">Probar en el Infantil</button>
+    <button id="btnQuitar">Infantil sin crónica</button>
+    <label class="boton">Probar fotos (varias)<input type="file" id="fotosPrueba" accept="image/*" multiple></label>
+    <label class="check"><input type="checkbox" id="chkPatro"> Hueco patrocinador</label>
+    <label class="check"><input type="checkbox" id="chkSinFotos"> Sin ninguna foto</label>
+  </div>
+  <div class="fila-botones">
+    <button id="btnEdicion">Siguiente edición (otras frases)</button>
+  </div>
+  <h1 style="margin-top:6px">Añadir noticia a mano</h1>
+  <p>Portada: sustituye a la portada automática y además lleva su noticia completa dentro. Secundaria: ocupa 2 columnas. Normal: 1 columna, como una breve.</p>
+  <div class="fila-botones">
+    <select id="nTipo" style="padding:6px;border-radius:6px"><option value="portada">Portada</option><option value="secundaria">Secundaria</option><option value="normal" selected>Normal</option></select>
+    <input id="nSeccion" placeholder="Sección (CLUB, CANTERA…)" style="padding:6px;border-radius:6px;flex:1;min-width:140px">
+  </div>
+  <input id="nTitular" placeholder="Titular" style="padding:8px;border-radius:6px;width:100%">
+  <textarea id="nTexto" placeholder="Texto de la noticia (opcional en portada)"></textarea>
+  <div class="fila-botones">
+    <label class="boton">Foto (opcional)<input type="file" id="nFoto" accept="image/*"></label>
+    <button id="btnNoticia">Añadir noticia</button>
+    <button id="btnBorrarNoticias">Quitar noticias a mano</button>
+  </div>
+  <p id="ranking" style="font-size:12.5px;line-height:1.5"></p>
+</div>
+
+<div class="paginas" id="paginas"></div>
+
+<!-- En el repo, el workflow genera salida/edicion.js con los datos reales (window.EDICION_REAL).
+     Si no existe (abriendo el archivo suelto), se usan los datos de ejemplo de abajo. -->
+<script src="salida/edicion.js"></script>
+<script>
+/* ================= CONFIGURACIÓN ================= */
+let CABECERA = 'El Cencerro de la Sede';
+const LEMA = 'El periódico del C.D. Villa de Buitrago';
+const ESCUDO_CLUB = 'escudo-club.png';
+const MASCOTA_PORTADA = 'mascota-victoria-local.png';   // se usa en la portada cuando no hay ninguna foto
+const ORDEN_CATEGORIAS = ['Senior','Femenino','Veterano','Juvenil','Cadete','Infantil','Alevín','Benjamín','Benjamín A','Benjamín B','Prebenjamín'];
+/* Importancia de cada categoría (para decidir la portada y el orden) y categorías
+   que solo tienen 3 resultados posibles (ganado / empatado / perdido, sin goles reales) */
+const CATEGORIAS = {
+  'Senior':{peso:10}, 'Femenino':{peso:9}, 'Cadete':{peso:7}, 'Infantil':{peso:7}, 'Veterano':{peso:6}, 'Alevín':{peso:5},
+  'Juvenil':{peso:7}, 'Benjamín':{peso:3, soloResultado:true}, 'Benjamín A':{peso:3, soloResultado:true}, 'Benjamín B':{peso:3, soloResultado:true}, 'Prebenjamín':{peso:2, soloResultado:true}
+};
+let SIN_FOTOS = false;
+/* Foto de plantilla por categoría (opcional): se usa en noticias grandes/medianas cuando no llega foto del partido */
+const FOTOS_ARCHIVO = { /* 'Senior': 'fotos-archivo/senior.jpg' */ };
+const CIERRES = ['¡Vamos verdes!','¡Somos el Villa!','¡Vamos Buitrago!'];
+const PALABRAS_GRANDE = 110;   // crónica a partir de estas palabras = noticia grande
+let MOSTRAR_PATROCINADOR = false;
+
+/* ================= DATOS DE EJEMPLO ================= */
+const VILLA = {nombre:'C.D. Villa Buitrago del Lozoya', escudo:ESCUDO_CLUB};
+const eq = nombre => ({nombre, escudo:'escudos-cache/'+nombre.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png'});
+const NOMBRES = ['Álex','Pablo','Iván','Rubén','Carlos','Adrián','Mario','Jorge','Raúl','Daniel','Hugo','Sergio','Luis','Óscar','Diego','Leo','Marcos','Nico','Álvaro','Izan','Bruno','Mateo','Gael','Enzo','Lucas','Saúl','Adam','Martín','Iker','Dani'];
+const APELLIDOS = ['Sanz','Ruiz','Gil','Moreno','Díaz','López','Vega','Prieto','Navas','Martín','Serrano','Gómez','Cano','Pardo','Mena','Rubio','Cruz','Ramos','León','Vidal','Ríos','Pérez'];
+function alinAuto(semillaTxt, n, nombres){
+  const r = semilla(semillaTxt);
+  return Array.from({length:n},(_,i)=>({dorsal:i+1, nombre:nombres?.[i] || `${NOMBRES[Math.floor(r()*NOMBRES.length)]} ${APELLIDOS[Math.floor(r()*APELLIDOS.length)]}`, portero:i===0, capitan:i===3}));
+}
+const goles = (lista, propio=true) => lista.flatMap(([jugador,n])=>Array.from({length:n},()=>({jugador,propio})));
+
+const CRONICA_INFANTIL = `Partido con poca historia ante un flojo rival.
+El equipo jugo un buen partido generando innumerables ocasiones de gol, …. sin animo de prepotencia, si hubiéramos estado mas finos de cara a gol se habrian llevado algunos goles mas.
+No es nada facil hacer 13 goles en esta categoria y los hicimos 👏👏👏👏
+Estamos muy ORGULLOSOS de estos GUERREROS que siguen peleando hasta el pitido final y se dejan todo en el campo.
+GRACIASSSSSS POR VUESTRAS GANAS Y POR El TRABAJO QUE REALIZAIS 💪💪💪💪
+ Ni la semana pasada éramos tan malos ni ahora tan buenos.
+Queda mucho camino por recorrer pero lo importante es la actitud y el caracter que un equipo debe tener para afrontar cualquier reto y este equipo tiene ambas cosas.
+Los 🐺🐺🐺🐺 nunca se rinden y acosan a sus rivales hasta que los agotan ….
+VAMOSSSSSS 🐺🐺🐺🐺
+A SEGUIR CURRANDO
+💪💪💪💪💪💪💪💪💪
+❤️❤️❤️❤️`;
+
+const EDICION = window.EDICION_REAL || {
+  numero: 1,
+  portadasAnteriores: ['Senior'],
+  /* De la app de lesionados (Apps Script → lesionados.json) */
+  lesionados: [ {nombre:'Carlos Díaz', categoria:'Senior'}, {nombre:'Nerea Gil', categoria:'Femenino'}, {nombre:'Izan Ramos', categoria:'Cadete'} ],
+  /* Noticias a mano (en producción, desde la misma app donde subes las crónicas): tipo portada | secundaria | normal */
+  noticias: [
+    { tipo:'normal', seccion:'Club', titular:'Ya está a la venta la lotería de Navidad del club',
+      texto:'Los décimos ya se pueden conseguir en la Sede y a través de los entrenadores de cada categoría. Cada participación ayuda a pagar material, desplazamientos y formación de entrenadores. ¡Que el gordo caiga en Buitrago!' }
+  ],   // categorías que fueron portada la semana pasada (en producción, de un JSON del repo)
+  /* La fecha de cabecera NO se escribe a mano: sale de los días en que se jugaron los partidos (ver fechasEdicion) */
+  partidos: [
+    { categoria:'Infantil', competicion:'1ª Infantil', jornada:9, fecha:'2026-11-07', local:VILLA, visitante:eq('CD Tres Cantos'), somosLocal:true,
+      golesLocal:13, golesVisitante:1, campo:'Peñalta',
+      goles:[...goles([['Rulo',3],['Lucas',3],['Robi',2],['Jorge',1],['Alex',1],['Junior',1],['Rocha',1]]), {propio:true, propiaMeta:true}, {propio:false}],
+      alineacion: alinAuto('inf',11,['Diego Mena','Robi','Marcos Gil','Nico Serrano','Rulo','Lucas','Jorge','Alex','Junior','Rocha','Mateo León']),
+      participaron:['Pol Sáez','Unai Mora','Gael Pardo'],
+      foto:'fotos/infantil.jpg',
+      cronica:{autor:'Entrenador del Infantil', titular:null, texto:CRONICA_INFANTIL} },
+    { categoria:'Senior', competicion:'2ª Aficionado', jornada:9, fecha:'2026-11-08', local:VILLA, visitante:eq('C.D. Lozoyuela'), somosLocal:true,
+      golesLocal:2, golesVisitante:1, campo:'Peñalta',
+      goles:[{jugador:'Daniel Martín',propio:true},{propio:false},{jugador:'Sergio Gómez',propio:true}],
+      alineacion: alinAuto('sen',11), participaron:['Luis Cano','Óscar Pardo'],
+      foto:'fotos/senior.jpg',
+      cronica:{autor:'Entrenador del Senior', titular:'Oficio para sumar tres puntos ante el Lozoyuela', texto:`Partido trabado, de mucho contacto y pocas ocasiones. Nos adelantamos con un gol de Dani tras una buena presión arriba y ellos empataron a balón parado.
+En la segunda parte el equipo creyó más que el rival y Sergio, que acababa de entrar, nos dio la victoria. Gracias a la afición que vino a Peñalta.`} },
+    { categoria:'Femenino', competicion:'1ª Femenino', jornada:9, fecha:'2026-11-08', local:eq('A.D. El Molar'), visitante:VILLA, somosLocal:false,
+      golesLocal:1, golesVisitante:2, campo:'Municipal de El Molar', cambioPosicion:{sube:true, pos:2}, goles:[{propio:false},...goles([['Lucía Sanz',1],['Marta Ruiz',1]])],
+      alineacion: alinAuto('fem',11,['Irene Gómez','Ana Martín','Laura Pérez','Sara Díaz','Lucía Sanz','Nerea Gil','Paula Vega','Marta Ruiz','Clara Soto','Elena Ramos','Noa Blanco']),
+      participaron:['Alba Cruz'], foto:null, cronica:null },
+    { categoria:'Veterano', competicion:'Liga Veteranos Madrid Norte', jornada:6, fecha:'2026-11-08', local:VILLA, visitante:eq('Veteranos Bustarviejo'), somosLocal:true,
+      golesLocal:5, golesVisitante:1, campo:'Peñalta', goles:[...goles([['Javier López',3],['Fernando Ruiz',1],['Antonio Gil',1]]),{propio:false}],
+      alineacion: alinAuto('vet',11), participaron:['Enrique Gil'], foto:null, cronica:null, expulsiones:[{propio:true}] },
+    { categoria:'Cadete', competicion:'2ª Cadete', jornada:8, descansa:true },
+    { categoria:'Alevín', competicion:'1ª Alevín F-7', jornada:8, fecha:'2026-11-07', local:eq('E.F. Torrelaguna'), visitante:VILLA, somosLocal:false,
+      golesLocal:4, golesVisitante:2, campo:'Municipal de Torrelaguna', goles:[...goles([['Hugo Pérez',2]]),...goles([['x',4]],false)],
+      alineacion: alinAuto('ale',7), participaron:['Rayan Mesa','Liam Ortega'], foto:null, cronica:null },
+    { categoria:'Benjamín A', competicion:'1ª Benjamín F-7', jornada:7, fecha:'2026-11-07', local:VILLA, visitante:eq('C.D. Talamanca'), somosLocal:true,
+      golesLocal:1, golesVisitante:1, campo:'Sede itinerante', goles:[],
+      alineacion: alinAuto('bena',7), participaron:['Unai Gil'], foto:null, cronica:null },
+    { categoria:'Benjamín B', competicion:'1ª Benjamín F-7', jornada:7, fecha:'2026-11-07', local:eq('A.D. Pedrezuela'), visitante:VILLA, somosLocal:false,
+      golesLocal:0, golesVisitante:1, campo:'Municipal de Pedrezuela', goles:[],
+      alineacion: alinAuto('benb',7), participaron:[], foto:null, cronica:null },
+    { categoria:'Prebenjamín', competicion:'1ª Prebenjamín F-7', jornada:5, fecha:'2026-11-06', local:VILLA, visitante:eq('U.D. Venturada'), somosLocal:true,
+      golesLocal:0, golesVisitante:1, campo:'Sede itinerante', goles:[],
+      alineacion: alinAuto('pre',7), participaron:['Teo Gil'], foto:null, cronica:null }
+  ],
+  /* En cada fila propia, "propio" lleva la categoría a la que corresponde (Benjamín A y B comparten grupo) */
+  clasificaciones: [
+    { categoria:'Senior',   competicion:'2ª Aficionado',   jornada:9, filas: tablaEjemplo('s',['C.D. Lozoyuela','A.D. El Molar','C.D. La Cabrera','E.F. Torrelaguna','C.D. Bustarviejo','C.D. Guadalix','A.D. Pedrezuela','C.D. Talamanca','U.D. Venturada','C.D. Valdetorres','C.D. Soto del Real','C.D. Miraflores','C.D. Manzanares'], {'Senior':11}) },
+    { categoria:'Femenino', competicion:'1ª Femenino',     jornada:9, filas: tablaEjemplo('f',['A.D. El Molar','C.D. Guadalix','E.F. Torrelaguna','C.D. Talamanca','A.D. Pedrezuela','C.D. Soto del Real','C.D. Miraflores','U.D. Venturada','C.D. La Cabrera'], {'Femenino':2}) },
+    { categoria:'Cadete',   competicion:'2ª Cadete',       jornada:8, filas: tablaEjemplo('c',['C.D. Guadalix','A.D. El Molar','C.D. La Cabrera','E.F. Torrelaguna','C.D. Talamanca','A.D. Pedrezuela','C.D. Bustarviejo','U.D. Venturada','C.D. Soto del Real','C.D. Miraflores','C.D. Lozoyuela'], {'Cadete':1}) },
+    { categoria:'Infantil', competicion:'1ª Infantil',     jornada:9, filas: tablaEjemplo('i',['CD Tres Cantos','C.D. La Cabrera','A.D. El Molar','C.D. Guadalix','E.F. Torrelaguna','C.D. Talamanca','A.D. Pedrezuela','C.D. Bustarviejo','U.D. Venturada','C.D. Soto del Real','C.D. Miraflores','C.D. Lozoyuela'], {'Infantil':9}) },
+    { categoria:'Alevín',   competicion:'1ª Alevín F-7',   jornada:8, filas: tablaEjemplo('a',['E.F. Torrelaguna','C.D. Guadalix','A.D. El Molar','C.D. Talamanca','A.D. Pedrezuela','U.D. Venturada','C.D. Soto del Real','C.D. Miraflores','C.D. La Cabrera'], {'Alevín':10}) },
+    { categoria:'Benjamín A', competicion:'1ª Benjamín F-7', jornada:7, filas: tablaEjemplo('b',['C.D. Talamanca','A.D. Pedrezuela','E.F. Torrelaguna','C.D. Guadalix','A.D. El Molar','U.D. Venturada','C.D. Soto del Real','C.D. Miraflores','C.D. La Cabrera','C.D. Bustarviejo'], {'Benjamín A':3, 'Benjamín B':7}) }
+  ],
+  /* Próximo partido de cada categoría: solo rival y si es local o visitante (horarios ya los dan otros repos) */
+  proximos: {
+    'Senior':{rival:eq('C.D. Guadalix'), local:false}, 'Femenino':{rival:eq('C.D. Talamanca'), local:true},
+    'Veterano':{rival:eq('Veteranos La Cabrera'), local:false}, 'Cadete':{rival:eq('A.D. El Molar'), local:true},
+    'Infantil':{rival:eq('C.D. La Cabrera'), local:false}, 'Alevín':{rival:eq('U.D. Venturada'), local:true},
+    'Benjamín A':{rival:eq('C.D. Miraflores'), local:false}, 'Benjamín B':{rival:eq('C.D. Soto del Real'), local:true},
+    'Prebenjamín':{rival:eq('A.D. Pedrezuela'), local:false}
+  }
+};
+
+/* Tabla de ejemplo con nuestros equipos en una posición concreta */
+function tablaEjemplo(clave, rivales, nuestros){
+  const r = semilla('tabla'+clave), total = rivales.length + Object.keys(nuestros).length;
+  const equipos = [...rivales];
+  Object.entries(nuestros).sort((a,b)=>a[1]-b[1]).forEach(([cat,pos])=>equipos.splice(pos-1,0,{cat}));
+  let pts = 4 + total*2;
+  return equipos.slice(0,total).map((e,i)=>{
+    pts -= i ? 1+Math.floor(r()*3) : 0; pts = Math.max(pts,0);
+    const propio = typeof e==='object' ? e.cat : false;
+    const nombre = propio ? VILLA.nombre + (Object.keys(nuestros).length>1 ? ` "${propio.slice(-1)}"` : '') : e;
+    const pj=9, gf=Math.max(0,pts+Math.floor(r()*6)-4), gc=Math.max(0,18-pts+Math.floor(r()*5));
+    return {pos:i+1, equipo:nombre, escudo:propio?ESCUDO_CLUB:eq(nombre).escudo, pj, gf, gc, pts, propio};
+  });
+}
+
+/* ================= UTILIDADES ================= */
+const esc = s => String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function semilla(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;} return ()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return ((h^=h>>>16)>>>0)/4294967296;}; }
+const conArt = r => /^(el|la|los|las)\s/i.test(r) ? r : 'el '+r;      // "el Tres Cantos" / "El Molar"
+const deArt  = r => /^(el|la|los|las)\s/i.test(r) ? 'de '+r : 'del '+r; // "del Guadalix" / "de El Molar"
+function nombreCorto(n){
+  const s = String(n||'');
+  if(/SAN SEBASTI[AÁ]N DE LOS REYES/i.test(s)) return 'Sanse';
+  if(/VILLA\s+(DE\s+)?BUITRAGO/i.test(s)){ const l=s.match(/["'“]([A-D])["'”]\s*$/); return 'Villa Buitrago'+(l?' '+l[1]:''); }
+  return s.replace(/^(C\.?\s?D\.?\s?E?\.?|A\.?\s?D\.?|C\.?\s?F\.?|U\.?\s?D\.?|E\.?\s?F\.?|A\.?\s?C\.?\s?D\.?|S\.?\s?D\.?)\s+/i,'').trim();
+}
+function iniciales(nombre){
+  const ini = nombreCorto(nombre).split(/\s+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 4 L92 18 V52 C92 76 72 90 50 97 C28 90 8 76 8 52 V18 Z" fill="#174B2B" stroke="#F4B400" stroke-width="5"/><text x="50" y="62" text-anchor="middle" font-family="Oswald,Arial" font-weight="700" font-size="34" fill="#F4B400">${ini}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+window.sinEscudo = img => { img.onerror=null; img.src = iniciales(img.dataset.n); };
+const escudo = equipo => `<img src="${esc(equipo.escudo)}" data-n="${esc(equipo.nombre)}" onerror="sinEscudo(this)" alt="">`;
+
+const golesPropios = p => p.somosLocal ? p.golesLocal : p.golesVisitante;
+const golesRival   = p => p.somosLocal ? p.golesVisitante : p.golesLocal;
+const rivalDe      = p => p.somosLocal ? p.visitante : p.local;
+const resultadoDe  = p => golesPropios(p)>golesRival(p)?'V':golesPropios(p)<golesRival(p)?'D':'E';
+const soloResultado = p => !!CATEGORIAS[p.categoria]?.soloResultado;
+const fotoDe = p => SIN_FOTOS ? null : (p.foto || null);
+const jugados = () => EDICION.partidos.filter(p=>!p.descansa);
+const SELLO = {V:'Victoria', E:'Empate', D:'Derrota'};
+const marcTexto = p => soloResultado(p) ? SELLO[resultadoDe(p)].toLowerCase() : `${p.golesLocal}-${p.golesVisitante}`;
+/* ===== Relevancia de cada noticia =====
+   1) NOTICIA: lo que ha pasado (copa, liderato, goleada, hat-trick, racha, victoria…)
+   2) × FACTOR de categoría (Senior 1,0 … Prebenjamín 0,6): pesa, pero no aplasta a una gran noticia de cantera
+   3) + CONTENIDO: foto y crónica ayudan a lucir la noticia, pero no la inventan
+   4) − ROTACIÓN: si fue portada la semana pasada, baja un poco, para que todas las familias tengan su turno
+   Benjamín y Prebenjamín nunca van a portada ni a "Dentro" (no tienen goles reales). */
+function relevancia(p){
+  const motivos=[]; let noticia=0;
+  const sumar=(pts,txt)=>{ noticia+=pts; motivos.push(`${txt} +${pts}`); };
+  const gs=goleadores(p), margen=golesPropios(p)-golesRival(p), res=resultadoDe(p);
+  if(p.copa) sumar(5,'Copa');
+  if(p.cambioPosicion?.lider) sumar(4,'Nuevo líder');
+  else if(p.cambioPosicion?.sube) sumar(2,'Sube en la tabla');
+  if(res==='V') sumar(2,'Victoria'); else if(res==='E') sumar(1,'Empate');
+  if(!soloResultado(p)){
+    if(margen>=5) sumar(3,'Goleada');
+    if(gs.some(g=>g.n>=3)) sumar(2,'Hat-trick');
+  }
+  if(p.racha>=3 && res!=='D') sumar(1,'Racha');
+  const factor = 0.5 + 0.5*(CATEGORIAS[p.categoria]?.peso||5)/10;
+  let total = noticia*factor;
+  motivos.push(`× ${factor.toFixed(2)} categoría`);
+  if(fotoDe(p)){ total+=2; motivos.push('Foto +2'); }
+  if(p.cronica?.texto){ total+=2; motivos.push('Crónica +2'); }
+  if((EDICION.portadasAnteriores||[]).includes(p.categoria)){ total-=3; motivos.push('Portada la semana pasada −3'); }
+  return {total: Math.round(total*10)/10, motivos, puedePortada: !soloResultado(p)};
+}
+const puntuacion = p => relevancia(p).total;
+const listaY = arr => arr.length<=1 ? (arr[0]||'') : arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1];
+function goleadores(p){
+  const m = new Map();
+  (p.goles||[]).filter(g=>g.propio&&g.jugador&&!g.propiaMeta).forEach(g=>m.set(g.jugador,(m.get(g.jugador)||0)+1));
+  return [...m.entries()].map(([nombre,n])=>({nombre,n})).sort((a,b)=>b.n-a.n);
+}
+const enPropia = p => (p.goles||[]).filter(g=>g.propio&&g.propiaMeta).length;
+function textoGoleadores(p){
+  const partes = goleadores(p).map(g=>g.n>1?`${g.nombre} (${g.n})`:g.nombre);
+  const pm = enPropia(p); if(pm) partes.push(pm>1?`${pm} en propia meta`:'uno en propia meta');
+  return partes.join(', ');
+}
+function clasificacionDe(p){
+  for(const c of (EDICION.clasificaciones||[])){ const f=c.filas.find(f=>f.propio===p.categoria); if(f) return f; }
+  return null;
+}
+
+/* Crónica del entrenador tal cual llega por WhatsApp: se respeta su texto,
+   solo se limpia lo que en papel queda feo (ristras de emojis, puntos suspensivos raros, líneas sueltas) */
+function limpiarCronica(t){
+  t = String(t||'').replace(/\r/g,'')
+    .replace(/…\s*\.+|\.{4,}/g,'…')
+    .replace(/(\p{Extended_Pictographic}️?)\1{1,}/gu,(m,e)=>e+e)
+    .replace(/[ \t]+/g,' ');
+  const parr=[];
+  t.split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>{
+    const corta = l.split(/\s+/).length<=5;
+    const ult = parr[parr.length-1];
+    if(corta && ult && ult.corta) ult.t += ' ' + l; else parr.push({t:l, corta});
+  });
+  return parr.map(p=>p.t);
+}
+
+/* ================= REPERTORIO DE FRASES =================
+   Huecos: {cat} categoría · {rival} "el Guadalix"/"El Molar" · {lugar} · {marc} marcador · {jug} jugador · {lista} goleadores · {n} número.
+   Nunca se burlan del rival ni hablan de rachas negativas. En producción esto puede ir a un frases-periodico.json aparte. */
+const FRASES = {
+  lugarCasa: ['en Peñalta','ante su afición en Peñalta','en casa, en Peñalta','en Peñalta, arropado por su gente','en su feudo de Peñalta','delante de los suyos en Peñalta'],
+  lugarFuera: ['a domicilio','lejos de casa','fuera de casa','en su desplazamiento','como visitante','en campo ajeno'],   // sin nombrar al rival: la frase ya lo nombra
+  lugarLocalSede: ['jugando como local','ejerciendo de local'],
+
+  // ---- Frase principal del resultado ----
+  goleada: [
+    'Exhibición del {cat} {lugar}: {marc} contra {rival}.',
+    'Tarde de goles para el {cat}, que se impuso {lugar} por {marc} contra {rival}.',
+    'El {cat} encontró portería una y otra vez {lugar} y ganó por {marc} contra {rival}.',
+    'Pegada y buen juego: el {cat} ganó {lugar} por {marc} contra {rival}.',
+    'Partido redondo del {cat}, que se llevó la victoria {lugar} por {marc} ante {rival}.',
+    'El {cat} no levantó el pie del acelerador y venció {lugar} por {marc} ante {rival}.',
+    'Victoria con mucho gol del {cat} {lugar} ante {rival} ({marc}).',
+    'El {cat} firmó uno de sus partidos más completos {lugar}: {marc} ante {rival}.',
+    'El marcador echó humo {lugar}: el {cat} ganó por {marc} contra {rival}.',
+    'Noventa minutos de acoso y gol: el {cat} se impuso {lugar} por {marc} ante {rival}.',
+    'El {cat} convirtió el partido en un recital {lugar} y ganó por {marc} contra {rival}.',
+    'Contundente victoria del {cat} {lugar}, que dejó un {marc} ante {rival}.'
+  ],
+  victoriaAmplia: [
+    'Victoria con autoridad del {cat} {lugar} ante {rival} ({marc}).',
+    'El {cat} sumó tres puntos {lugar} tras imponerse por {marc} contra {rival}.',
+    'Buen partido del {cat}, que ganó {lugar} por {marc} ante {rival}.',
+    'El {cat} controló el encuentro {lugar} y se llevó la victoria por {marc} ante {rival}.',
+    'Tres puntos sin sobresaltos para el {cat}, que ganó {lugar} por {marc} contra {rival}.',
+    'El {cat} hizo los deberes {lugar}: {marc} ante {rival}.',
+    'Jornada redonda para el {cat}, que se impuso {lugar} por {marc} ante {rival}.',
+    'El {cat} dejó claro su buen momento {lugar} con un {marc} ante {rival}.',
+    'Sin dudas y con buen fútbol, el {cat} ganó {lugar} por {marc} contra {rival}.',
+    'El {cat} mandó de principio a fin {lugar} y venció por {marc} ante {rival}.',
+    'Victoria solvente del {cat} {lugar}: {marc} contra {rival}.',
+    'El {cat} supo cerrar el partido a tiempo {lugar} y ganó por {marc} ante {rival}.'
+  ],
+  victoriaJusta: [
+    'Victoria trabajada del {cat} {lugar} ante {rival} ({marc}).',
+    'El {cat} sufrió, pero se llevó los tres puntos {lugar} contra {rival} ({marc}).',
+    'Tres puntos de oro para el {cat}, que ganó {lugar} por {marc} ante {rival}.',
+    'Partido igualado que cayó del lado del {cat} {lugar}: {marc} ante {rival}.',
+    'El {cat} supo competir hasta el final y ganó {lugar} por {marc} contra {rival}.',
+    'Por la mínima, pero victoria: el {cat} se impuso {lugar} por {marc} ante {rival}.',
+    'Con oficio y paciencia, el {cat} sacó adelante el partido {lugar} contra {rival} ({marc}).',
+    'El {cat} apretó los dientes {lugar} y sumó tres puntos ante {rival} ({marc}).',
+    'De esas victorias que se celebran el doble: el {cat} ganó {lugar} por {marc} contra {rival}.',
+    'El {cat} aguantó el resultado con uñas y dientes {lugar} ante {rival} ({marc}).',
+    'Un gol de diferencia y mucho corazón: el {cat} ganó {lugar} por {marc} ante {rival}.',
+    'Partido de los que hacen equipo: victoria del {cat} {lugar} contra {rival} ({marc}).'
+  ],
+  remontada: [
+    'El {cat} empezó perdiendo, pero le dio la vuelta al partido {lugar} y ganó por {marc} ante {rival}.',
+    'Remontada con carácter del {cat} {lugar}: {marc} contra {rival}.',
+    'El {cat} encajó primero, no bajó los brazos y acabó ganando {lugar} por {marc} ante {rival}.',
+    'Fe y carácter para darle la vuelta al marcador: el {cat} venció {lugar} por {marc} contra {rival}.',
+    'El {cat} se levantó tras el gol en contra y firmó la remontada {lugar} ante {rival} ({marc}).'
+  ],
+  empate: [
+    'Empate {lugar} entre el {cat} y {rival} ({marc}).',
+    'El {cat} y {rival} se repartieron los puntos {lugar} ({marc}).',
+    'Partido de ida y vuelta {lugar}: el {cat} empató {marc} contra {rival}.',
+    'El {cat} sumó un punto {lugar} en un partido muy disputado contra {rival} ({marc}).',
+    'Tablas {lugar} entre el {cat} y {rival}, con un {marc} final.',
+    'Ni para unos ni para otros: el {cat} empató {lugar} contra {rival} ({marc}).',
+    'Igualdad máxima {lugar}: el {cat} y {rival} firmaron el {marc}.',
+    'El {cat} rascó un punto {lugar} en un duelo muy abierto contra {rival} ({marc}).',
+    'Reparto justo de puntos {lugar} entre el {cat} y {rival} ({marc}).'
+  ],
+  empateCero: [
+    'Empate sin goles {lugar} entre el {cat} y {rival}.',
+    'Partido muy cerrado {lugar}: el {cat} empató a cero contra {rival}.',
+    'El {cat} sumó un punto {lugar} con la portería a cero ante {rival}.',
+    'Duelo de mucha táctica {lugar}, que terminó sin goles entre el {cat} y {rival}.',
+    'El {cat} y {rival} no lograron marcar {lugar} y firmaron el 0-0.',
+    'Las defensas ganaron la partida {lugar}: 0-0 entre el {cat} y {rival}.',
+    'Punto y portería a cero para el {cat} {lugar} ante {rival}.'
+  ],
+  derrotaJusta: [
+    'El {cat} cayó por la mínima {lugar} ante {rival} ({marc}).',
+    'Derrota ajustada del {cat} {lugar} contra {rival} ({marc}).',
+    'El {cat} lo intentó hasta el final, pero no pudo puntuar {lugar} ante {rival} ({marc}).',
+    'Se escaparon los puntos por poco: el {cat} perdió {lugar} por {marc} contra {rival}.',
+    'Partido igualado que no sonrió al {cat} {lugar} ante {rival} ({marc}).',
+    'El {cat} mereció más {lugar}, pero perdió por {marc} contra {rival}.',
+    'Un detalle decidió el partido {lugar}: derrota del {cat} ante {rival} ({marc}).',
+    'El {cat} plantó cara {lugar}, aunque se quedó sin premio ante {rival} ({marc}).'
+  ],
+  derrota: [
+    'El {cat} no pudo puntuar {lugar} ante {rival} ({marc}).',
+    'Jornada complicada para el {cat} {lugar} contra {rival} ({marc}).',
+    'Derrota del {cat} {lugar} ante {rival} ({marc}).',
+    'No fue el día del {cat}, que perdió {lugar} por {marc} contra {rival}.',
+    'El {cat} se encontró {lugar} con un rival muy sólido y cayó por {marc}.',
+    'Tarde para olvidar y aprender: el {cat} perdió {lugar} por {marc} ante {rival}.',
+    'El {cat} no encontró su mejor versión {lugar} y cayó ante {rival} ({marc}).'
+  ],
+  // ---- Coletilla tras el resultado ----
+  coletillaV: [
+    'Un resultado que premia el trabajo de toda la semana.','El equipo jugó con cabeza y con corazón.',
+    'Buen trabajo colectivo de principio a fin.','La manada sigue sumando.',
+    'Otra muestra del buen momento del grupo.','El vestuario lo celebró como se merecía.',
+    'Victoria de equipo, de las que hacen grupo.','El esfuerzo de los entrenamientos se notó en el campo.',
+    'Tres puntos que dan confianza para lo que viene.','Así da gusto empezar la semana.',
+    'El cencerro suena fuerte esta semana.'
+  ],
+  coletillaE: [
+    'Un punto que suma y que el equipo peleó hasta el final.','Punto a punto también se construye una temporada.',
+    'El equipo no dejó de pelear ni un minuto.','Queda el sabor de haberlo dado todo.',
+    'Un punto trabajado que puede valer mucho al final.','El grupo sigue creciendo partido a partido.'
+  ],
+  coletillaD: [
+    'No salió el resultado, pero sí la actitud.','Toca levantarse y seguir trabajando.',
+    'De estos partidos también se aprende.','El equipo compitió y ya piensa en el siguiente.',
+    'Los lobos nunca se rinden: a por la próxima.','La semana que viene, nueva oportunidad.',
+    'Cabeza alta: queda mucha temporada por delante.','El grupo está unido y eso es lo más importante.'
+  ],
+  // ---- Peques (Benjamín, Prebenjamín): sin marcador ----
+  pequesV: [
+    'Victoria del {cat} {lugar} contra {rival}.','Los peques del {cat} se llevaron el partido {lugar} ante {rival}.',
+    'Alegría para el {cat}, que ganó {lugar} contra {rival}.','Buen partido del {cat}, que se impuso {lugar} ante {rival}.',
+    'Sonrisas y victoria para el {cat} {lugar} contra {rival}.','El {cat} disfrutó y ganó {lugar} ante {rival}.'
+  ],
+  pequesE: [
+    'Empate del {cat} {lugar} contra {rival}.','El {cat} y {rival} terminaron en tablas {lugar}.',
+    'Partido muy igualado del {cat} {lugar} ante {rival}.','Reparto de alegrías entre el {cat} y {rival} {lugar}.'
+  ],
+  pequesD: [
+    'El {cat} no pudo ganar {lugar} contra {rival}, pero disfrutó del partido.',
+    'Partido de aprendizaje para el {cat} {lugar} contra {rival}.',
+    'El {cat} cayó {lugar} ante {rival}; lo importante es seguir aprendiendo.',
+    'El {cat} lo dio todo {lugar} ante {rival}, aunque esta vez no llegó la victoria.'
+  ],
+  pequesColetilla: [
+    'Lo mejor, las sonrisas y las ganas de los peques.','Cada partido es un paso más para estos pequeños lobos.',
+    'Gracias a las familias por acompañar al equipo.','Disfrutar, aprender y compartir: así se crece.',
+    'Los entrenadores destacaron el esfuerzo de todo el grupo.','Compañerismo y ganas: eso es lo que cuenta.',
+    'Un sábado más de fútbol y amistad.','Los peques siguen aprendiendo a lo grande.'
+  ],
+  // ---- Detalles ----
+  hat: ['{jug} se llevó el balón a casa con un hat-trick.','Tarde mágica para {jug}, autor de un hat-trick.',
+        '{jug} firmó tres goles y fue el gran protagonista.','Hat-trick de {jug}, que no perdonó.',
+        'Tres veces cantó gol {jug}, que se lleva el balón de recuerdo.','{jug} estuvo imparable: hat-trick.'],
+  doblete: ['Doblete de {jug}.','{jug} marcó por partida doble.','{jug} firmó un doblete.','Dos goles de {jug}, decisivo en el marcador.',
+            '{jug} vio puerta en dos ocasiones.','Partidazo de {jug}, autor de dos goles.'],
+  unGol: ['El gol fue obra de {jug}.','{jug} firmó el tanto del Villa.','El tanto del Villa llevó la firma de {jug}.','{jug} fue quien encontró la red.'],
+  variosGoles: ['Los goles llevaron la firma de {lista}.','Marcaron {lista}.','En el marcador aparecieron {lista}.','Vieron puerta {lista}.'],
+  porteriaCero: ['Además, la portería quedó a cero.','La defensa no concedió nada.','Portería a cero para redondear la jornada.',
+                 'Atrás, ni una grieta: portería a cero.','El portero se fue a casa sin encajar.'],
+  racha: ['Ya son {n} partidos sin perder.','El equipo encadena {n} jornadas invicto.','{n} partidos seguidos sin conocer la derrota.',
+          'La racha sigue viva: {n} partidos sin perder.'],
+  expulsion: ['El equipo tuvo que sobreponerse a una expulsión.','Hubo que jugar con uno menos tras una expulsión, algo a corregir entre todos.',
+              'Una expulsión obligó al equipo a multiplicar esfuerzos.'],
+  lider: ['Además, el equipo es el nuevo líder de su grupo.','Con este resultado, el {cat} se coloca líder.','¡Y a dormir en lo más alto de la tabla!'],
+  sube: ['El equipo sube hasta la {n}ª posición.','Con estos tres puntos, el {cat} escala hasta el {n}º puesto.','El {cat} gana posiciones y ya es {n}º.'],
+  lesion: ['Mucho ánimo a {jug}, que se recupera de una lesión.','Desde aquí, pronta recuperación para {jug}.',
+           '{jug} sigue en la enfermería: ¡te esperamos pronto!','Todo el club manda fuerza a {jug} para volver cuanto antes.',
+           'Ánimo, {jug}: la Sede te espera.','Se echa de menos a {jug}; pronta recuperación.'],
+  lesionVarios: ['Mucho ánimo a {lista}, que se recuperan de sus lesiones.','Pronta recuperación para {lista}.',
+                 'Todo el club manda fuerza a {lista} para volver cuanto antes.','La enfermería espera vaciarse pronto: ánimo a {lista}.'],
+  cierre: ['¡Vamos verdes!','¡Somos el Villa!','¡Vamos Buitrago!','¡A seguir currando!','¡Los lobos nunca se rinden!','¡A por la próxima!',
+           '¡Aúpa Villa!','¡Que suene el cencerro!','¡Orgullo verde!','¡Esto es el Villa!'],
+
+  // ---- Titulares ----
+  tLider: ['¡El {cat} es líder!','El {cat} asalta el liderato','Líderes: el {cat} manda en su grupo','El {cat} ya mira a todos desde arriba'],
+  tRemontada: ['Remontada del {cat} ante {rival}','El {cat} le da la vuelta al partido','Carácter verde: remontada del {cat}','El {cat} nunca se rinde'],
+  tGoleada: ['Festival goleador del {cat} contra {rival}','{gp} goles del {cat} ante {rival}','Exhibición del {cat} ante {rival}',
+             'Tarde de goles para el {cat}','El {cat} no tiene freno: {marc} ante {rival}','El {cat} pone el marcador a echar humo'],
+  tHat: ['Hat-trick de {jugCorto} en la victoria del {cat}','{jugCorto} se viste de goleador con un hat-trick','Tres goles de {jugCorto} para el {cat}',
+         '{jugCorto} se lleva el balón a casa'],
+  tDoblete: ['{jugCorto} guía al {cat} ante {rival}','Doblete de {jugCorto} en el triunfo del {cat}','{jugCorto}, protagonista con dos goles',
+             '{jugCorto} decide para el {cat}'],
+  tVictoria: ['El {cat} gana ante {rival}','Tres puntos de oro para el {cat}','Victoria con sello verde ante {rival}','El {cat} sigue sumando',
+              'Triunfo del {cat} contra {rival}','Alegría verde ante {rival}','El {cat} cumple ante {rival}','Victoria convincente del {cat}'],
+  tVictoriaJusta: ['Victoria trabajada del {cat}','El {cat} gana por la mínima ante {rival}','Tres puntos sufridos y celebrados para el {cat}',
+                   'El {cat} aprieta los dientes y gana','Victoria de oficio del {cat}'],
+  tEmpate: ['Reparto de puntos entre el {cat} y {rival}','El {cat} suma un punto ante {rival}','Tablas entre el {cat} y {rival}','Empate peleado del {cat}',
+            'Ni vencedores ni vencidos ante {rival}'],
+  tEmpateCero: ['Portería a cero y un punto para el {cat}','Empate sin goles ante {rival}','Duelo cerrado entre el {cat} y {rival}'],
+  tDerrota: ['El {cat} compite ante {rival}','Partido de aprendizaje para el {cat}','El {cat} no puntúa ante {rival}','El {cat} ya piensa en la próxima',
+             'Tropiezo del {cat} ante {rival}','El {cat} se queda sin premio'],
+  tPequesV: ['Victoria del {cat} ante {rival}','Alegría para el {cat}','El {cat} se lleva el partido','Sonrisas en el {cat}'],
+  tPequesE: ['Empate del {cat} ante {rival}','Tablas para el {cat}','Reparto de alegrías en el {cat}'],
+  tPequesD: ['El {cat} sigue aprendiendo','El {cat} compite ante {rival}','Partido de aprendizaje para el {cat}','El {cat} lo da todo']
+};
+
+/* Elige una frase sin repetir dentro de la misma edición; la semilla cambia cada número,
+   así la misma situación no da siempre la misma frase semana tras semana */
+let FRASES_USADAS = new Set();
+const CACHE_TEXTOS = new Map();
+function elegir(clave, p, huecos={}){
+  const lista = FRASES[clave] || [''];
+  const r = semilla(`${clave}|${p.categoria}|${p.jornada}|${EDICION.numero}`);
+  const orden = lista.map((t,i)=>({t, k:r()+i*0})).sort((a,b)=>a.k-b.k).map(x=>x.t);
+  // Primero una que no salga en este número ni en los últimos; si no queda, al menos que no se repita en este
+  const recientes = new Set(EDICION.frasesRecientes||[]);
+  const elegida = orden.find(t=>!FRASES_USADAS.has(t) && !recientes.has(t)) || orden.find(t=>!FRASES_USADAS.has(t)) || orden[0];
+  FRASES_USADAS.add(elegida);
+  return rellenar(elegida, p, huecos);
+}
+function rellenar(t, p, huecos){
+  const rv = rivalDe(p), rival = rv ? nombreCorto(rv.nombre) : '';
+  const base = { cat:p.categoria, rival:conArt(rival), rivalSolo:rival, deRival:deArt(rival),
+                 marc:`${p.golesLocal}-${p.golesVisitante}`, gp:golesPropios(p), ...huecos };
+  return t.replace(/\{(\w+)\}/g, (m,k)=> base[k]!==undefined ? base[k] : m);
+}
+function lugarDe(p){
+  const clave = /pe[ñn]alta/i.test(p.campo||'') ? 'lugarCasa' : p.somosLocal ? 'lugarLocalSede' : 'lugarFuera';
+  return elegir(clave, p);
+}
+function claveResultado(p){
+  const res=resultadoDe(p), m=golesPropios(p)-golesRival(p);
+  if(soloResultado(p)) return 'peques'+res;
+  if(res==='V' && esRemontada(p) && m<5) return 'remontada';
+  if(res==='V') return m>=5 ? 'goleada' : m>=2 ? 'victoriaAmplia' : 'victoriaJusta';
+  if(res==='E') return golesPropios(p)===0 ? 'empateCero' : 'empate';
+  return m<=-2 ? 'derrota' : 'derrotaJusta';
+}
+/* Remontada: el primer gol fue del rival y acabamos ganando (por minuto si lo hay, si no por orden del acta) */
+function esRemontada(p){
+  const g = [...(p.goles||[])].sort((a,b)=>(a.minuto??999)-(b.minuto??999));
+  const ordenados = g.some(x=>x.minuto!=null) ? g : (p.goles||[]);
+  return resultadoDe(p)==='V' && ordenados.length>1 && ordenados[0].propio===false;
+}
+/* Lesionados de la app de Apps Script (lesionados.json: nombre + categoría) */
+const lesionadosDe = cat => (EDICION.lesionados||[]).filter(l=>l.categoria===cat).map(l=>l.nombre);
+function fraseLesion(p, cat){
+  const ls = lesionadosDe(cat||p.categoria);
+  if(!ls.length) return null;
+  return ls.length===1 ? elegir('lesion', p, {jug:ls[0]}) : elegir('lesionVarios', p, {lista:listaY(ls)});
+}
+const fraseResultado = p => elegir(claveResultado(p), p, {lugar: lugarDe(p)});
+
+function generarTitular(p){
+  if(CACHE_TEXTOS.has(p)) return CACHE_TEXTOS.get(p);
+  const res=resultadoDe(p), gs=goleadores(p), hat=gs.find(g=>g.n>=3), dob=gs.find(g=>g.n===2), m=golesPropios(p)-golesRival(p);
+  let t;
+  if(soloResultado(p)) t = elegir('tPeques'+res, p);
+  else if(p.cambioPosicion?.lider && res!=='D') t = elegir('tLider', p);
+  else if(res==='V' && m>=5) t = elegir('tGoleada', p);
+  else if(res==='V' && esRemontada(p)) t = elegir('tRemontada', p);
+  else if(res==='V' && hat) t = elegir('tHat', p, {jugCorto: hat.nombre.split(' ')[0]});
+  else if(res==='V' && dob) t = elegir('tDoblete', p, {jugCorto: dob.nombre.split(' ')[0]});
+  else if(res==='V') t = elegir(m===1 ? 'tVictoriaJusta' : 'tVictoria', p);
+  else if(res==='E') t = elegir(golesPropios(p)===0 ? 'tEmpateCero' : 'tEmpate', p);
+  else t = elegir('tDerrota', p);
+  CACHE_TEXTOS.set(p, t);
+  return t;
+}
+/* Detalles que se añaden tras el resultado (goles, hat-trick, racha, tabla…) */
+function detalles(p, conGoleadores){
+  const res=resultadoDe(p), gs=goleadores(p), d=[];
+  if(!soloResultado(p)){
+    if(conGoleadores && gs.length){
+      if(gs.length===1 && gs[0].n===1) d.push(elegir('unGol', p, {jug:gs[0].nombre}));
+      else if(gs.length>1) d.push(elegir('variosGoles', p, {lista: listaY(gs.map(g=>g.n>1?`${g.nombre} (${g.n})`:g.nombre))}));
+    }
+    gs.filter(g=>g.n>=3).forEach(g=>d.push(elegir('hat', p, {jug:g.nombre})));
+    if(!gs.some(g=>g.n>=3)){ const dob=gs.find(g=>g.n===2); if(dob) d.push(elegir('doblete', p, {jug:dob.nombre})); }
+    if(golesRival(p)===0 && res==='V') d.push(elegir('porteriaCero', p));
+  }
+  if((p.expulsiones||[]).some(e=>e.propio)) d.push(elegir('expulsion', p));
+  if(p.racha>=3 && res!=='D') d.push(elegir('racha', p, {n:p.racha}));
+  if(p.cambioPosicion?.lider) d.push(elegir('lider', p));
+  else if(p.cambioPosicion?.sube) d.push(elegir('sube', p, {n:p.cambioPosicion.pos}));
+  const les = fraseLesion(p); if(les) d.push(les);
+  return d;
+}
+const coletilla = p => soloResultado(p) ? elegir('pequesColetilla', p) : elegir('coletilla'+resultadoDe(p), p);
+
+/* Breve: resultado + detalles + cierre (el marcador y los goleadores ya se ven en la pieza) */
+function generarBreve(p){
+  const partes = [fraseResultado(p), ...detalles(p,false)];
+  if(soloResultado(p) || resultadoDe(p)==='D') partes.push(coletilla(p));
+  partes.push(elegir('cierre', p));
+  return [partes.join(' ')];
+}
+/* Crónica automática (medianas con foto pero sin crónica del entrenador) */
+function generarCronica(p){
+  const d = detalles(p,true);
+  return [`${fraseResultado(p)} ${coletilla(p)}`, ...(d.length?[d.join(' ')]:[]), elegir('cierre', p)];
+}
+function datoDestacado(p){
+  const gs=goleadores(p), hats=gs.filter(g=>g.n>=3), d=[];
+  if(gs.length>=4) d.push(`${gs.length} goleadores distintos`);
+  if(hats.length>=2) d.push(`${hats.length} hat-tricks`);
+  else if(hats.length===1 && gs.length>=4) d.push(`hat-trick de ${hats[0].nombre}`);
+  if(golesPropios(p)>=8) d.unshift(`${golesPropios(p)} goles`);
+  if(p.racha>=3 && resultadoDe(p)!=='D') d.push(`${p.racha} partidos sin perder`);
+  return d.length ? d.join(', ').replace(/^./,c=>c.toUpperCase()) : null;
+}
+
+/* ================= MAQUETACIÓN DE TEXTO ================= */
+const tokenizar = parrafos => { const t=[]; parrafos.forEach((p,i)=>p.split(/\s+/).filter(Boolean).forEach(w=>t.push({p:i,w}))); return t; };
+function htmlDeTokens(tokens, final=''){
+  const grupos=[]; let actual=null, pi=null;
+  tokens.forEach(t=>{ if(t.p!==pi){ actual=[]; grupos.push(actual); pi=t.p; } actual.push(t.w); });
+  return grupos.map((g,i)=>`<p>${esc(g.join(' '))}${i===grupos.length-1?final:''}</p>`).join('') || `<p>${final}</p>`;
+}
+const desborda = el => el.scrollWidth > el.clientWidth+2 || el.scrollHeight > el.clientHeight+2;
+function columnasPara(n, ancho){ return ancho<420 ? 1 : ancho<720 ? (n<80?1:2) : (n<60?1:n<200?2:3); }
+
+/* Texto en su tamaño natural (sin límite de alto) */
+function textoNatural(el, tokens, o){
+  el.style.columnCount = columnasPara(tokens.length, o.ancho);
+  el.style.fontSize = o.max+'px';
+  el.innerHTML = htmlDeTokens(tokens);
+}
+/* Texto con alto limitado: baja la letra hasta o.min y, si aun así no cabe, corta y devuelve el resto */
+function textoAjustado(el, tokens, o){
+  el.style.columnCount = columnasPara(tokens.length, o.ancho);
+  el.innerHTML = htmlDeTokens(tokens);
+  for(let fs=o.max; fs>=o.min; fs--){ el.style.fontSize=fs+'px'; if(!desborda(el)) return []; }
+  el.style.fontSize = o.min+'px';
+  const sigue=' <span class="sigue">SIGUE ▸</span>';
+  let lo=0, hi=tokens.length-1;
+  while(lo<hi){ const mid=Math.ceil((lo+hi)/2); el.innerHTML=htmlDeTokens(tokens.slice(0,mid),sigue); if(desborda(el)) hi=mid-1; else lo=mid; }
+  el.innerHTML = htmlDeTokens(tokens.slice(0,lo), sigue);
+  return tokens.slice(lo);
+}
+function ajustarTitular(el, max, min, altoMax){
+  for(let fs=max; fs>=min; fs-=2){ el.style.fontSize=fs+'px'; if(el.scrollHeight<=altoMax) return; }
+}
+
+/* ================= FOTOS DE CUALQUIER TAMAÑO ================= */
+function fotoHTML(src, pie){
+  if(!src) return '';
+  return `<div class="foto"><img class="fondo" src="${esc(src)}" alt=""><img class="prin" src="${esc(src)}" onload="encajarFoto(this)" onerror="this.parentNode.classList.add('vacia')" alt="">${pie?`<div class="pie">${esc(pie)}</div>`:''}</div>`;
+}
+/* Si la foto tiene una proporción parecida al hueco, se recorta (cover) apuntando al tercio superior,
+   donde suelen estar las caras; si es muy distinta (vertical en hueco horizontal o al revés),
+   se muestra entera con la misma foto difuminada de fondo, sin cortar a nadie ni la marca de agua. */
+window.encajarFoto = img => {
+  const caja = img.parentNode, rCaja = caja.clientWidth/caja.clientHeight, rFoto = img.naturalWidth/img.naturalHeight;
+  const distinta = Math.abs(Math.log(rFoto/rCaja)) > 0.35;
+  caja.classList.toggle('encaje', distinta);
+  img.style.objectPosition = distinta ? '50% 50%' : (rFoto < rCaja ? '50% 30%' : '50% 50%');
+};
+
+/* ================= ARTÍCULOS ================= */
+function tipoDe(p){
+  const palabras = p.cronica?.texto ? limpiarCronica(p.cronica.texto).join(' ').split(/\s+/).length : 0;
+  if(palabras >= PALABRAS_GRANDE) return 'grande';
+  if(p.cronica?.texto || fotoDe(p)) return 'mediana';
+  return 'breve';
+}
+function marcadorHTML(p){
+  const lado = (eqp, nuestro) => `<div class="lado ${nuestro?'nuestro':''}">${escudo(eqp)}<div class="nom">${esc(nombreCorto(eqp.nombre))}</div></div>`;
+  if(soloResultado(p)){ const r=resultadoDe(p); return `<div class="mc">${lado(p.local,p.somosLocal)}<span class="sello ${r}">${SELLO[r]}</span>${lado(p.visitante,!p.somosLocal)}</div>`; }
+  return `<div class="mc">${lado(p.local,p.somosLocal)}<div class="res"><span class="${p.somosLocal?'nuestro':''}">${p.golesLocal}</span><i>-</i><span class="${p.somosLocal?'':'nuestro'}">${p.golesVisitante}</span></div>${lado(p.visitante,!p.somosLocal)}</div>`;
+}
+function fichaHTML(p){
+  const titulares = (p.alineacion||[]).map(j=>esc(j.nombre)+(j.capitan?' (c)':'')).join(', ');
+  const tambien = (p.participaron||[]).length ? ` <b>También:</b> ${esc(p.participaron.join(', '))}.` : '';
+  return titulares ? `<div class="ficha"><b>Alineación:</b> ${titulares}.${tambien}</div>` : '';
+}
+function infoKicker(p){
+  const rojas = (p.expulsiones||[]).length ? ' · ' + '🟥'.repeat(p.expulsiones.length) : '';
+  return `${esc(p.competicion)}${p.jornada?' · J'+p.jornada:''}${rojas}`;
+}
+
+function crearArticulo(p, tipo, anchoCols){
+  const art = document.createElement('article');
+  art.className = 'art '+tipo;
+  const titular = p.cronica?.titular || generarTitular(p);
+  const gol = textoGoleadores(p);
+  const golHTML = gol ? `<div class="goleadores"><b>Goles:</b> ${esc(gol)}</div>` : '';
+  const cl = clasificacionDe(p);
+  const clHTML = cl ? `<div class="clasi-linea"><b>Clasificación:</b> ${cl.pos}º · ${cl.pts} pts</div>` : '';
+  const dato = datoDestacado(p);
+  const datoHTML = dato && tipo!=='breve' ? `<div class="dato"><div class="et">EL DATO</div><div class="txt">${esc(dato)}</div></div>` : '';
+  const conCronica = !!p.cronica?.texto;
+  const parrafos = tipo==='breve' ? generarBreve(p) : (conCronica ? limpiarCronica(p.cronica.texto) : generarCronica(p));
+  const firma = conCronica ? `Crónica: <b>${esc(p.cronica.autor)}</b>` : '';
+  // Foto del partido; si el equipo no ha mandado ninguna, la de archivo de la plantilla (si existe)
+  const foto = fotoDe(p) || (SIN_FOTOS ? null : FOTOS_ARCHIVO[p.categoria]) || null;
+  const pieFoto = fotoDe(p) ? `${p.categoria} · ${marcTexto(p)} ante ${conArt(nombreCorto(rivalDe(p).nombre))}` : `Foto de archivo · ${p.categoria}`;
+
+  if(tipo==='breve'){
+    art.innerHTML = `
+      <div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span></div>
+      <div class="kicker-info" style="margin:-4px 0 6px">${infoKicker(p)}</div>
+      <h3 class="titular">${esc(titular)}</h3>
+      ${marcadorHTML(p)}${golHTML}
+      <div class="cronica continua"></div>
+      ${fichaHTML(p)}${clHTML}`;
+  } else {
+    art.innerHTML = `
+      <div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span><span class="kicker-info">${infoKicker(p)}</span></div>
+      <h2 class="titular">${esc(titular)}</h2>
+      <div class="cuerpo-art">
+        <div class="lateral">${marcadorHTML(p)}${golHTML}${datoHTML}${fotoDe(p)?'':fichaHTML(p)}${clHTML}${lesionadosDe(p.categoria).length?`<div class="enfermeria"><b>Enfermería:</b> ${esc(listaY(lesionadosDe(p.categoria)))}. ¡Pronta recuperación!</div>`:''}</div>
+        <div class="principal">${fotoHTML(foto, pieFoto)}${firma?`<div class="firma">${firma}</div>`:''}<div class="cronica"></div></div>
+      </div>`;
+  }
+  // Ancho real de la columna de texto, para decidir 1/2/3 columnas
+  const anchoTotal = anchoCols, lateral = tipo==='grande'?290+24:tipo==='mediana'?250+24:0;
+  const opts = {ancho: anchoTotal - lateral, max: tipo==='grande'?28:tipo==='mediana'?26:23, min: tipo==='breve'?20:22};
+  art._tokens = tokenizar(parrafos);
+  art._opts = opts;
+  art._categoria = p.categoria; art._firma = firma;
+  if(tipo!=='breve' && conCronica) art.dataset.partible = '1';
+  art._natural = () => textoNatural(art.querySelector('.cronica'), art._tokens, opts);
+  return art;
+}
+
+function crearContinuacion(art, resto, ancho){
+  const c = document.createElement('article');
+  c.className = 'art continua';
+  c.innerHTML = `<div class="kicker-fila"><span class="kicker">${esc(art._categoria)}</span><span class="kicker-info">Viene de la página anterior</span></div>
+    ${art._firma?`<div class="firma">${art._firma}</div>`:''}<div class="cronica continua"></div>`;
+  c._tokens = resto; c._opts = {ancho, max:28, min:22}; c._categoria=art._categoria; c._firma=art._firma;
+  c.dataset.partible='1';
+  c._natural = () => textoNatural(c.querySelector('.cronica'), c._tokens, c._opts);
+  return c;
+}
+
+/* Noticia escrita a mano (club, cantera, lotería, eventos…) */
+function crearNoticiaManual(n, tipo, ancho){
+  const art = document.createElement('article');
+  art.className = `art ${tipo} manual`;
+  const parrafos = n.texto ? limpiarCronica(n.texto) : [];
+  const kicker = `<div class="kicker-fila"><span class="kicker">${esc(n.seccion||'Club')}</span></div>`;
+  const firma = n.autor ? `<div class="firma">Por <b>${esc(n.autor)}</b></div>` : '';
+  if(tipo==='breve'){
+    art.innerHTML = `${kicker}<h3 class="titular">${esc(n.titular)}</h3>${fotoHTML(n.foto,'')}${firma}<div class="cronica continua"></div>`;
+  } else {
+    art.innerHTML = `${kicker}<h2 class="titular">${esc(n.titular)}</h2>
+      <div class="cuerpo-art"><div class="principal">${fotoHTML(n.foto,'')}${firma}<div class="cronica"></div></div></div>`;
+  }
+  const opts = {ancho, max: tipo==='grande'?28:tipo==='mediana'?26:23, min: tipo==='breve'?20:22};
+  art._tokens = tokenizar(parrafos); art._opts = opts; art._categoria = n.seccion||'Club'; art._firma = '';
+  if(tipo!=='breve' && parrafos.length) art.dataset.partible='1';
+  art._natural = () => textoNatural(art.querySelector('.cronica'), art._tokens, opts);
+  return art;
+}
+
+/* ================= FILAS Y PAGINACIÓN ================= */
+const ANCHO_CUERPO = 1080 - 52*2;
+const GAP = 26, COL = (ANCHO_CUERPO - 2*GAP)/3, SEP_V = 18;
+const anchoSpan = s => s*COL + (s-1)*GAP;
+
+/* Cada partido es una "pieza" que ocupa 3, 2 o 1 columnas según lo que tenga */
+function construirPiezas(){
+  const ps = porImportancia(jugados()).map(p=>({p, tipo:tipoDe(p)}));
+  const span = {grande:3, mediana:2, breve:1};
+  // Noticias a mano: la de portada va dentro como grande (si tiene texto); secundaria = mediana; normal = breve
+  const manuales = (EDICION.noticias||[]).filter(n=>n.tipo!=='portada' || n.texto)
+    .map(n=>({n, tipo: n.tipo==='portada' ? 'grande' : n.tipo==='secundaria' ? 'mediana' : 'breve'}));
+  const piezas = ['grande','mediana','breve'].flatMap(t => [
+    ...manuales.filter(x=>x.tipo===t).map(x=>({el:crearNoticiaManual(x.n, t, anchoSpan(span[t])), span:span[t]})),
+    ...ps.filter(x=>x.tipo===t).map(x=>({el:crearArticulo(x.p, t, anchoSpan(span[t])), span:span[t]}))
+  ]);
+  if(MOSTRAR_PATROCINADOR){
+    const a = document.createElement('article'); a.className='art';
+    a.innerHTML = `<div class="anuncio"><div class="a1">TU MARCA AQUÍ</div><div class="a2">Patrocina Peñalta News y llega cada semana a las familias del club</div></div>`;
+    piezas.push({el:a, span:3});
+  }
+  return piezas;
+}
+/* ===== Fecha de la edición =====
+   Se toma el primer y el último día con partido de los que entran en este número (aplazados incluidos).
+   No depende de cuándo se publique ni de cuándo corra el workflow. */
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function fechasEdicion(){
+  const fs = jugados().map(p=>p.fecha).filter(Boolean).sort();
+  if(!fs.length) return {largo:'', corto:''};
+  const d = x => { const [a,m,dd]=x.split('-').map(Number); return new Date(a,m-1,dd); };
+  const ini = d(fs[0]), fin = d(fs[fs.length-1]);
+  const mes = x => MESES[x.getMonth()], mesC = x => MESES[x.getMonth()].slice(0,3);
+  if(+ini===+fin) return {largo:`${DIAS[ini.getDay()][0].toUpperCase()+DIAS[ini.getDay()].slice(1)} ${ini.getDate()} de ${mes(ini)}`, corto:`${ini.getDate()} ${mesC(ini)}`};
+  const dias = Math.round((fin-ini)/864e5);
+  const finde = dias<=2 && ini.getDay()>=5 || (dias===1 && ini.getDay()===6);
+  const mismoMes = ini.getMonth()===fin.getMonth();
+  let largo;
+  if(mismoMes) largo = dias===1 ? `${ini.getDate()} y ${fin.getDate()} de ${mes(fin)}` : `Del ${ini.getDate()} al ${fin.getDate()} de ${mes(fin)}`;
+  else largo = `Del ${ini.getDate()} de ${mes(ini)} al ${fin.getDate()} de ${mes(fin)}`;
+  if(finde) largo = 'Fin de semana ' + (largo.startsWith('Del') ? largo.replace(/^Del/,'del') : 'del '+largo);
+  const corto = mismoMes ? `${ini.getDate()}-${fin.getDate()} ${mesC(fin)}` : `${ini.getDate()} ${mesC(ini)} - ${fin.getDate()} ${mesC(fin)}`;
+  return {largo, corto};
+}
+
+function nuevaInterior(cont){
+  const pg = nuevaPagina(cont);
+  pg.innerHTML = `${barra('Deportes · '+fechasEdicion().corto)}<div class="cuerpo"></div>`;
+  return {cuerpo: pg.querySelector('.cuerpo'), alturas:[0,0,0]};
+}
+function prepararPieza(el){
+  el._natural && el._natural();
+  // Nombres de equipo: en vez de partir palabras, se reduce la letra hasta que quepan
+  el.querySelectorAll('.mc .nom').forEach(n=>{ for(let fs=16; fs>=10; fs--){ n.style.fontSize=fs+'px'; if(n.scrollWidth<=n.clientWidth+1) break; } });
+  el.querySelectorAll('.titular').forEach(t=>{
+    if(el.classList.contains('grande')) ajustarTitular(t,58,40,135);
+    else if(el.classList.contains('mediana')) ajustarTitular(t,44,30,110);
+    else ajustarTitular(t,32,24,120);
+  });
+}
+/* Busca el hueco libre más alto donde quepa una pieza de "span" columnas */
+function mejorHueco(alturas, span){
+  let mejor=null;
+  for(let c=0;c<=3-span;c++){ const y=Math.max(...alturas.slice(c,c+span)); if(!mejor || y<mejor.y) mejor={c,y}; }
+  return mejor;
+}
+function situar(el, c, y, span){
+  el.classList.toggle('izq', c>0); el.classList.toggle('abajo', y>0);
+  el.style.left = (c>0 ? c*(COL+GAP) - GAP/2 : 0)+'px';
+  el.style.width = (anchoSpan(span) + (c>0 ? GAP/2 : 0))+'px';
+  el.style.top = y+'px';
+}
+function paginar(cont, piezas){
+  let pag = nuevaInterior(cont);
+  const cola = [...piezas];
+  while(cola.length){
+    const pz = cola.shift(), el = pz.el, H = pag.cuerpo.clientHeight;
+    const {c, y} = mejorHueco(pag.alturas, pz.span);
+    el.style.height='';
+    pag.cuerpo.appendChild(el); situar(el, c, y, pz.span); prepararPieza(el);
+    const h = el.offsetHeight, partible = !!el.dataset.partible;
+    const paginaVacia = pag.alturas.every(a=>a===0);
+    let final = y + h;
+    if(final > H){
+      if(partible && (H - y >= 520 || paginaVacia)){
+        // Crónica larga: ocupa el alto que queda, ajusta letra y lo que no quepa sigue en la página siguiente
+        el.style.height = (H - y)+'px';
+        const resto = textoAjustado(el.querySelector('.cronica'), el._tokens, el._opts);
+        if(resto.length) cola.unshift({el:crearContinuacion(el, resto, ANCHO_CUERPO), span:3});
+        final = H;
+      } else if(!paginaVacia){
+        el.remove(); pag = nuevaInterior(cont); cola.unshift(pz); continue;
+      }
+    }
+    for(let k=c;k<c+pz.span;k++) pag.alturas[k] = final + SEP_V;
+  }
+}
+
+/* ================= PÁGINAS ================= */
+function nuevaPagina(cont, clase=''){
+  const m=document.createElement('div'); m.className='marco';
+  const pg=document.createElement('div'); pg.className='pagina '+clase;
+  m.appendChild(pg); cont.appendChild(m); return pg;
+}
+const barra = seccion => `<div class="barra"><span class="barra-cab">${esc(CABECERA)}</span><span class="barra-sec">${esc(seccion)}</span><span class="num-pag"></span></div>`;
+
+const porImportancia = arr => [...arr].sort((a,b)=>puntuacion(b)-puntuacion(a));
+
+/* Portada: la noticia más importante, con foto si la hay; si no hay ninguna foto, portada gráfica */
+function crearPortada(cont){
+  const ps = porImportancia(jugados()).filter(p=>relevancia(p).puedePortada);
+  if(!ps.length) ps.push(...porImportancia(jugados()));   // si solo jugaron los peques
+  const lider = ps[0];
+  const conFoto = fotoDe(lider) ? lider : ps.find(p=>fotoDe(p));
+  const otras = ps.filter(p=>p!==lider).slice(0,3);
+  const r = lider ? resultadoDe(lider) : 'E';
+  const visual = conFoto
+    ? fotoHTML(fotoDe(conFoto), `${conFoto.categoria} · ${marcTexto(conFoto)} ante ${conArt(nombreCorto(rivalDe(conFoto).nombre))}`)
+    : `<div class="grafica"><div class="cat">${esc(lider.categoria.toUpperCase())}</div>
+        <img class="esc" src="${esc(lider.local.escudo)}" data-n="${esc(lider.local.nombre)}" onerror="sinEscudo(this)" alt="">
+        <div class="num">${soloResultado(lider) ? `<b>${SELLO[r].toUpperCase()}</b>` : `${lider.somosLocal?`<b>${lider.golesLocal}</b>`:lider.golesLocal}-${lider.somosLocal?lider.golesVisitante:`<b>${lider.golesVisitante}</b>`}`}</div>
+        <img class="esc" src="${esc(lider.visitante.escudo)}" data-n="${esc(lider.visitante.nombre)}" onerror="sinEscudo(this)" alt="">
+        ${r==='V' ? `<img class="masc" src="${esc(MASCOTA_PORTADA)}" onerror="this.remove()" alt="">` : ''}
+      </div>`;
+  // Portada puesta a mano: manda sobre la automática, y los partidos más relevantes pasan a "Dentro"
+  const manual = (EDICION.noticias||[]).find(n=>n.tipo==='portada');
+  const visualFinal = !manual ? visual : manual.foto ? fotoHTML(manual.foto,'')
+    : `<div class="grafica"><div class="cat">${esc((manual.seccion||'Club').toUpperCase())}</div><img class="esc" style="width:300px;height:300px" src="${esc(ESCUDO_CLUB)}" data-n="${esc(VILLA.nombre)}" onerror="sinEscudo(this)" alt=""></div>`;
+  const titularPortada = manual ? manual.titular : (lider.cronica?.titular || generarTitular(lider));
+  const entradilla = manual?.texto ? (limpiarCronica(manual.texto)[0].match(/^.*?[.!?](\s|$)/)?.[0] || limpiarCronica(manual.texto)[0]) + ' Más en el interior.'
+    : `${jugados().length} partidos, crónicas, goleadores y clasificaciones de todo el club.`;
+  const listaDentro = manual ? ps.slice(0,3) : otras;
+  window.__portadaCategoria = manual ? 'manual' : lider?.categoria || null;
+  const pg = nuevaPagina(cont,'portada');
+  pg.innerHTML = `
+    <div class="cabecera">${escudo(VILLA)}<div><div class="nombre">${esc(CABECERA)}</div><div class="lema">${esc(LEMA)}</div></div>${escudo(VILLA)}</div>
+    <div class="fecha"><span>Nº ${EDICION.numero}</span><span>${esc(fechasEdicion().largo)}</span><span>Buitrago del Lozoya</span></div>
+    ${visualFinal}
+    <h1 class="titular">${esc(titularPortada)}</h1>
+    <div class="entradilla">${esc(entradilla)}</div>
+    <div class="dentro">${listaDentro.map(p=>`<div class="t"><div class="c">${esc(p.categoria)}</div><div class="h">${esc(p.cronica?.titular || generarTitular(p))}</div><div class="r">${esc(marcTexto(p))}</div></div>`).join('')}</div>
+    <div class="desliza">TODOS LOS RESULTADOS, EN LA PÁGINA 2 ▸</div>`;
+  ajustarTitular(pg.querySelector('.titular'), 82, 48, 180);
+  // Cabecera: el nombre se ajusta para caber en una línea
+  const nom = pg.querySelector('.nombre');
+  for(let fs=118; fs>=56; fs-=2){ nom.style.fontSize=fs+'px'; if(nom.scrollWidth<=nom.clientWidth+1) break; }
+  pg.querySelectorAll('.dentro .h').forEach(h=>ajustarTitular(h,23,18,80));
+}
+
+/* Página 2: todos los resultados de un vistazo, incluidas las categorías que descansan */
+function crearResultados(cont){
+  const pg = nuevaPagina(cont);
+  const fila = p => {
+    if(p.descansa){ const les=fraseLesion(p); return `<div class="res-fila descansa"><div class="cat">${esc(p.categoria)}${p.jornada?`<small>J${p.jornada}</small>`:''}</div><div class="marc-linea">${esc(p.aviso||'Descansa esta jornada')}${les?'<br><small style="font-size:21px">'+esc(les)+'</small>':''}</div></div>`; }
+    const r = resultadoDe(p);
+    const centro = soloResultado(p) ? `<span class="sello ${r}">${SELLO[r]}</span>`
+      : `<span class="s">${p.somosLocal?`<b>${p.golesLocal}</b>`:p.golesLocal}-${p.somosLocal?p.golesVisitante:`<b>${p.golesVisitante}</b>`}</span>`;
+    return `<div class="res-fila"><div class="cat">${esc(p.categoria)}<small>${esc(p.competicion)}${p.jornada?' · J'+p.jornada:''}</small></div>
+      <div class="marc-linea"><span class="n l ${p.somosLocal?'nuestro':''}">${esc(nombreCorto(p.local.nombre))}</span>${escudo(p.local)}${centro}${escudo(p.visitante)}<span class="n ${p.somosLocal?'':'nuestro'}">${esc(nombreCorto(p.visitante.nombre))}</span></div></div>`;
+  };
+  pg.innerHTML = `${barra('Resultados · '+fechasEdicion().corto)}
+    <h2 class="titular" style="font-size:60px">La jornada en un vistazo</h2>
+    <div class="res-lista">${ordenar(EDICION.partidos).map(fila).join('')}</div>`;
+}
+
+/* Solo el de delante y el de detrás; si es primero, sus dos perseguidores; si es último, los dos de delante.
+   Si hay dos equipos nuestros en el mismo grupo (Benjamín A y B), se juntan las dos ventanas. */
+function filasVisibles(filas){
+  const n = filas.length, idx = new Set();
+  filas.forEach((f,i)=>{
+    if(!f.propio) return;
+    const ini = i===0 ? 0 : i===n-1 ? Math.max(0,n-3) : i-1;
+    for(let k=ini; k<Math.min(n,ini+3); k++) idx.add(k);
+  });
+  return [...idx].sort((a,b)=>a-b);
+}
+function proximoHTML(cat, conNombre){
+  const px = EDICION.proximos?.[cat];
+  if(!px) return '';
+  return `<div class="proximo"><b>Próximo${conNombre?' '+esc(cat.split(' ').pop()):''}:</b>${escudo(px.rival)}<span>${esc(nombreCorto(px.rival.nombre))}</span><em>${px.local?'local':'visitante'}</em></div>`;
+}
+function bloqueClasificacion(c){
+  const cats = [...new Set(c.filas.filter(f=>f.propio).map(f=>f.propio))];
+  const vis = filasVisibles(c.filas);
+  let filasHTML = '', anterior = -1;
+  vis.forEach(i=>{
+    if(anterior>=0 && i>anterior+1) filasHTML += `<tr class="salto"><td colspan="5">···</td></tr>`;
+    const f = c.filas[i];
+    filasHTML += `<tr class="${f.propio?'propio':''}"><td>${f.pos}º</td><td class="eq">${escudo({nombre:f.equipo,escudo:f.escudo})}${esc(nombreCorto(f.equipo))}</td><td>${f.pj}</td><td>${f.gf-f.gc>0?'+':''}${f.gf-f.gc}</td><td class="pts">${f.pts}</td></tr>`;
+    anterior = i;
+  });
+  return `<div class="tabla-bloque">
+    <div class="kicker-fila"><span class="kicker">${esc(cats.length>1 ? listaY(cats).replace(/Benjamín A y Benjamín B/,'Benjamín A y B') : c.categoria)}</span><span class="kicker-info">${esc(c.competicion)} · J${c.jornada}</span></div>
+    <table><thead><tr><th>#</th><th class="eq">Equipo</th><th>PJ</th><th>DG</th><th>PTS</th></tr></thead><tbody>${filasHTML}</tbody></table>
+    ${cats.map(cat=>proximoHTML(cat, cats.length>1)).join('')}</div>`;
+}
+function crearClasificaciones(cont){
+  const tablas = ordenar(EDICION.clasificaciones||[]);
+  const cubiertas = new Set(tablas.flatMap(c=>c.filas.filter(f=>f.propio).map(f=>f.propio)));
+  // Categorías sin clasificación oficial (veteranos): solo su próximo partido
+  const sueltas = ordenar(EDICION.partidos).filter(p=>!cubiertas.has(p.categoria) && EDICION.proximos?.[p.categoria])
+    .map(p=>`<div class="tabla-bloque"><div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span><span class="kicker-info">Sin clasificación oficial</span></div>${proximoHTML(p.categoria,false)}</div>`);
+  const bloques = [...tablas.map(bloqueClasificacion), ...sueltas];
+  if(!bloques.length) return;
+  const pagina = () => { const pg=nuevaPagina(cont); pg.innerHTML=`${barra('Clasificación · '+fechasEdicion().corto)}<h2 class="titular" style="font-size:54px">Cómo van y a quién toca</h2><div class="cuerpo"><div class="clasi-grid"></div></div>`; return pg.querySelector('.cuerpo'); };
+  let cuerpo = pagina();
+  bloques.forEach(b=>{
+    const grid = cuerpo.querySelector('.clasi-grid');
+    grid.insertAdjacentHTML('beforeend', b);
+    if(desborda(cuerpo) && grid.children.length>1){
+      grid.lastElementChild.remove();
+      cuerpo = pagina();
+      cuerpo.querySelector('.clasi-grid').insertAdjacentHTML('beforeend', b);
+    }
+  });
+}
+
+const ordenar = arr => [...arr].sort((a,b)=>{ const ia=ORDEN_CATEGORIAS.indexOf(a.categoria), ib=ORDEN_CATEGORIAS.indexOf(b.categoria); return (ia<0?99:ia)-(ib<0?99:ib); });
+function numerar(cont){
+  const pgs = cont.querySelectorAll('.pagina');
+  pgs.forEach((pg,i)=>{ const n=pg.querySelector('.num-pag'); if(n) n.textContent=`Pág. ${i+1}/${pgs.length}`; });
+}
+
+/* ================= MONTAJE ================= */
+function escala(){ document.documentElement.style.setProperty('--e', Math.min(1,(Math.min(window.innerWidth,1112)-32)/1080)); }
+function montar(){
+  escala();
+  FRASES_USADAS = new Set(); CACHE_TEXTOS.clear();
+  document.getElementById('ranking').innerHTML = '<b>Relevancia de esta edición:</b><br>' + porImportancia(jugados()).map(p=>{
+    const r=relevancia(p); return `${esc(p.categoria)}: <b>${r.total}</b> <span style="color:#888">(${esc(r.motivos.join(', '))}${r.puedePortada?'':', nunca portada'})</span>`;
+  }).join('<br>');
+  const cont=document.getElementById('paginas'); cont.innerHTML='';
+  crearPortada(cont);
+  crearResultados(cont);
+  paginar(cont, construirPiezas());
+  crearClasificaciones(cont);
+  numerar(cont);
+  // Para el workflow: qué fue portada y qué frases salieron (para no repetirlas las próximas semanas)
+  window.__resultado = { portada: window.__portadaCategoria, frases: [...FRASES_USADAS], paginas: cont.querySelectorAll('.pagina').length };
+}
+if(window.EDICION_REAL) document.querySelector('.panel').style.display='none';
+window.fuentesCargadas = () => document.fonts.ready.then(montar);
+window.addEventListener('load', ()=>document.fonts.ready.then(montar));
+window.addEventListener('resize', escala);
+
+const infantil = () => EDICION.partidos.find(p=>p.categoria==='Infantil');
+document.getElementById('btnProbar').onclick = ()=>{
+  const t=document.getElementById('txtCronica').value.trim(); if(!t) return;
+  infantil().cronica = {autor:'Prueba', titular:null, texto:t}; montar();
+};
+document.getElementById('btnQuitar').onclick = ()=>{ infantil().cronica=null; montar(); };
+document.getElementById('btnEdicion').onclick = ()=>{ EDICION.numero++; montar(); };
+document.getElementById('chkSinFotos').onchange = e=>{ SIN_FOTOS=e.target.checked; montar(); };
+let fotoNoticia = null;
+document.getElementById('nFoto').onchange = e=>{ const f=e.target.files[0]; fotoNoticia = f ? URL.createObjectURL(f) : null; };
+document.getElementById('btnNoticia').onclick = ()=>{
+  const titular = document.getElementById('nTitular').value.trim(); if(!titular) return;
+  const tipo = document.getElementById('nTipo').value;
+  if(tipo==='portada') EDICION.noticias = (EDICION.noticias||[]).filter(n=>n.tipo!=='portada');   // solo una portada
+  EDICION.noticias = [...(EDICION.noticias||[]), { tipo, titular,
+    seccion: document.getElementById('nSeccion').value.trim() || 'Club',
+    texto: document.getElementById('nTexto').value.trim(), foto: fotoNoticia }];
+  fotoNoticia = null; ['nTitular','nTexto','nSeccion','nFoto'].forEach(id=>document.getElementById(id).value='');
+  montar();
+};
+document.getElementById('btnBorrarNoticias').onclick = ()=>{ EDICION.noticias=[]; montar(); };
+document.getElementById('chkPatro').onchange = e=>{ MOSTRAR_PATROCINADOR=e.target.checked; montar(); };
+document.getElementById('fotosPrueba').onchange = e=>{
+  const urls=[...e.target.files].map(f=>URL.createObjectURL(f));
+  const destino = ['Infantil','Senior','Femenino','Veterano','Cadete'];
+  urls.forEach((u,i)=>{ const p=EDICION.partidos.find(x=>x.categoria===destino[i]); if(p) p.foto=u; });
+  montar();
+};
+montar();
+</script>
+</body>
+</html>
