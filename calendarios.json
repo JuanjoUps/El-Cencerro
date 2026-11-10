@@ -1,0 +1,9 @@
+[
+  { "categoriaMostrar": "Senior",      "codigoEquipo": "846904",   "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=1&competicion=26738300&grupo=26738302" },
+  { "categoriaMostrar": "Femenino",    "codigoEquipo": "17138002", "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=1&competicion=26737874&grupo=26737875" },
+  { "categoriaMostrar": "Cadete",      "codigoEquipo": "3082888",  "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=1&competicion=26737768&grupo=26737774" },
+  { "categoriaMostrar": "Infantil",    "codigoEquipo": "3088877",  "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=1&competicion=26737828&grupo=26737830" },
+  { "categoriaMostrar": "Alevín",      "codigoEquipo": "24710895", "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=2&competicion=26738141&grupo=26738146" },
+  { "categoriaMostrar": "Benjamín",                                "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=2&competicion=26737943&grupo=27642668" },
+  { "categoriaMostrar": "Prebenjamín",                             "url": "https://www.rffm.es/competicion/calendario?temporada=22&tipojuego=2&competicion=26797573&grupo=28112552" }
+]
