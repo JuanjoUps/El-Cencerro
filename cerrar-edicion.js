@@ -30,6 +30,8 @@ const nuevo = {
   hasta: meta.hasta,
   portada: res.portada || null,
   portadasAnteriores: meta.portadasAnteriores || [],
+  claves: meta.claves || [],
+  incluidos: meta.incluidos || [],
   frasesRecientes: recientes.slice(-SEMANAS_SIN_REPETIR_FRASES),
   actualizado: new Date().toISOString()
 };
