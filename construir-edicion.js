@@ -28,7 +28,8 @@ const CODIGOS_CONOCIDOS = ['846904', '2276659', '3082888', '3088877', '24710895'
 
 /* ---------------- utilidades ---------------- */
 const log = (...a) => console.log(...a);
-const diag = (titulo, dato) => { if (DIAG) log(`\n🔎 [DIAGNÓSTICO] ${titulo}:\n` + (typeof dato === 'string' ? dato : JSON.stringify(dato, null, 2)).slice(0, 2500)); };
+const recortar = (k, v) => (typeof v === 'string' && v.length > 160 ? v.slice(0, 60) + `…[${v.length} caracteres]` : Array.isArray(v) && v.length > 4 ? [...v.slice(0, 4), `…y ${v.length - 4} más`] : v);
+const diag = (titulo, dato) => { if (DIAG) log(`\n🔎 [DIAGNÓSTICO] ${titulo}:\n` + (typeof dato === 'string' ? dato : JSON.stringify(dato, recortar, 2)).slice(0, 6000)); };
 const existe = p => { try { fs.accessSync(p); return true; } catch { return false; } };
 const leer = (p, def = null) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return def; } };
 const listar = dir => { try { return fs.readdirSync(dir); } catch { return []; } };
@@ -132,7 +133,7 @@ function urlEscudo(u) {
   if (!u || typeof u !== 'string') return '';
   if (/^https?:\/\//.test(u)) return u;
   if (u.startsWith('//')) return 'https:' + u;
-  if (u.startsWith('/')) return 'https://www.rffm.es' + u;
+  if (u.startsWith('/')) return 'https://appweb.rffm.es' + u;
   return '';
 }
 function apuntarEscudo(nombre, u) { const url = urlEscudo(u); if (nombre && url && !ESCUDOS_WEB.has(slug(nombre))) ESCUDOS_WEB.set(slug(nombre), url); }
@@ -140,39 +141,68 @@ function apuntarEscudo(nombre, u) { const url = urlEscudo(u); if (nombre && url 
 function nombreEquipo(n) {
   n = String(n || '').trim().replace(/\s+/g, ' ');
   if (n !== n.toUpperCase()) return n;
-  return n.split(' ').map(w => /\./.test(w) || w.replace(/["'“”]/g, '').length <= 2 ? w
+  const SIGLAS = /^(CD|CF|AD|UD|EF|SD|CP|AT|RC|CDE|ACD|AD|SAD|FC|CDF|EMF|EFF)$/;
+  return n.split(' ').map(w => /\./.test(w) || SIGLAS.test(w) || /^["'“”]?[A-D]["'“”]?$/.test(w) ? w
     : /^(DE|DEL|LA|LAS|LOS|Y)$/.test(w) ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
 }
 const equipo = (nombre, escudo) => ({ nombre: nombreEquipo(nombre) || '¿?', escudo: esNuestro(nombre) ? ESCUDO_CLUB : buscarEscudo(nombre, escudo) });
 const nombrePie = n => esNuestro(n) ? 'Villa' : nombreEquipo(n).replace(/^(C\.?\s?D\.?\s?E?\.?|A\.?\s?D\.?|C\.?\s?F\.?|U\.?\s?D\.?|E\.?\s?F\.?|S\.?\s?D\.?)\s+/i, '');
 
 /* ---------------- 1. Resultados (Actas-Villa) ---------------- */
+/* Busca dentro del resultado el primer array cuya clave encaje (goles, alineacion…), esté donde esté */
+function arrayPorClave(o, re, prof = 0) {
+  if (!o || typeof o !== 'object' || prof > 4) return null;
+  for (const [k, v] of Object.entries(o)) if (Array.isArray(v) && re.test(k)) return v;
+  for (const v of Object.values(o)) { if (v && typeof v === 'object' && !Array.isArray(v)) { const a = arrayPorClave(v, re, prof + 1); if (a) return a; } }
+  return null;
+}
+const limpiarEscudo = u => (typeof u === 'string' && !u.startsWith('data:') ? u : undefined);
+const competicionBonita = t => String(t || '').toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()).replace(/\bF-?(\d)\b/gi, 'F-$1');
+
 function normalizarResultado(r, archivo) {
-  const nomLocal = nombreDe(val(r, 'local.nombre', 'equipoLocal.nombre', 'equipo_local', 'equipoLocal', 'nombreLocal', 'local'));
-  const nomVisit = nombreDe(val(r, 'visitante.nombre', 'equipoVisitante.nombre', 'equipo_visitante', 'equipoVisitante', 'nombreVisitante', 'visitante'));
-  let gl = num(val(r, 'golesLocal', 'goles_local', 'marcador.local', 'resultado.local', 'local.goles'));
-  let gv = num(val(r, 'golesVisitante', 'goles_visitante', 'marcador.visitante', 'resultado.visitante', 'visitante.goles'));
-  const textoRes = val(r, 'resultado', 'marcador');
-  if ((gl === undefined || gv === undefined) && typeof textoRes === 'string') {
-    const m = textoRes.match(/(\d+)\s*[-–]\s*(\d+)/); if (m) { gl = +m[1]; gv = +m[2]; }
-  }
-  let somosLocal = val(r, 'somosLocal', 'esLocal', 'localEsPropio');
+  const res = (r.resultado && typeof r.resultado === 'object') ? r.resultado : {};
+  // Formato de Actas-Villa: resultado.{local, visitante, propioLocal, equipoPropio, rival, escudoPropioUrl, escudoRivalUrl…}
+  let somosLocal = val(res, 'propioLocal', 'esLocal') ?? val(r, 'somosLocal', 'esLocal', 'localEsPropio', 'propioLocal');
+  const nomPropio = nombreDe(val(res, 'equipoPropio') ?? val(r, 'equipoPropio'));
+  const nomRival = nombreDe(val(res, 'rival', 'equipoRival') ?? val(r, 'rival', 'equipoRival'));
+  let nomLocal = nombreDe(val(r, 'local.nombre', 'equipoLocal.nombre', 'equipo_local', 'equipoLocal', 'nombreLocal'));
+  let nomVisit = nombreDe(val(r, 'visitante.nombre', 'equipoVisitante.nombre', 'equipo_visitante', 'equipoVisitante', 'nombreVisitante'));
+  if (typeof r.local === 'string') nomLocal = nomLocal || r.local;
+  if (typeof r.visitante === 'string') nomVisit = nomVisit || r.visitante;
   if (somosLocal === undefined) {
+    const codP = String(val(res, 'codigoEquipoPropio') || '');
     const codL = String(val(r, 'codigoEquipoLocal', 'codigo_equipo_local', 'local.codigo') || '');
-    somosLocal = codL ? CODIGOS.has(codL) : esNuestro(nomLocal);
+    somosLocal = codL ? (CODIGOS.has(codL) || codL === codP) : nomLocal ? esNuestro(nomLocal) : true;
   }
   somosLocal = !!somosLocal;
-  const nomPropio = somosLocal ? nomLocal : nomVisit;
-  const fecha = fechaISO(val(r, 'fecha', 'fechaPartido', 'fecha_partido', 'dia')) || fechaISO(archivo);
-  const textoCat = [val(r, 'categoria', 'categoriaMostrar', 'categoria_nombre'), val(r, 'competicion', 'nombreCompeticion', 'nombre_competicion'), val(r, 'grupo', 'nombreGrupo'), archivo].filter(Boolean).join(' ');
-  const categoria = categoriaDe(textoCat, nomPropio);
+  if (nomPropio || nomRival) {
+    nomLocal = somosLocal ? (nomPropio || 'C.D. Villa Buitrago del Lozoya') : nomRival;
+    nomVisit = somosLocal ? nomRival : (nomPropio || 'C.D. Villa Buitrago del Lozoya');
+  }
+  const codPropio = String(val(res, 'codigoEquipoPropio') || '');
+  if (codPropio) CODIGOS.add(codPropio);
 
-  const golesLista = (val(r, 'goles', 'goleadores', 'listaGoles') || []);
+  let gl = num(val(res, 'local', 'golesLocal')) ?? num(val(r, 'golesLocal', 'goles_local', 'marcador.local', 'local.goles'));
+  let gv = num(val(res, 'visitante', 'golesVisitante')) ?? num(val(r, 'golesVisitante', 'goles_visitante', 'marcador.visitante', 'visitante.goles'));
+  const textoRes = typeof r.resultado === 'string' ? r.resultado : typeof r.marcador === 'string' ? r.marcador : '';
+  if ((gl === undefined || gv === undefined) && textoRes) { const m = textoRes.match(/(\d+)\s*[-–]\s*(\d+)/); if (m) { gl = +m[1]; gv = +m[2]; } }
+
+  const nombrePropioLado = somosLocal ? nomLocal : nomVisit;
+  const fecha = fechaISO(val(r, 'fecha', 'fechaPartido', 'fecha_partido', 'dia')) || fechaISO(archivo);
+  const textoCat = [val(r, 'categoria', 'categoriaMostrar', 'categoria_nombre'), val(r, 'competicion', 'nombreCompeticion', 'nombre_competicion'), archivo].filter(Boolean).join(' ');
+  const categoria = categoriaDe(textoCat, nombrePropioLado);
+
+  // Goles
+  const golesLista = val(r, 'goles', 'goleadores', 'listaGoles') || arrayPorClave(r, /gol/i) || [];
   const goles = Array.isArray(golesLista) ? golesLista.map(g => {
-    let propio = val(g, 'propio', 'esPropio', 'nuestro');
+    if (typeof g === 'string') return { jugador: nombrePersona(g), propio: true };
+    let propio = val(g, 'propio', 'esPropio', 'nuestro', 'deEquipoPropio');
     if (propio === undefined) {
-      const lado = String(val(g, 'equipo', 'lado', 'tipo') || '').toLowerCase();
-      if (lado.includes('local')) propio = somosLocal; else if (lado.includes('visit')) propio = !somosLocal;
+      const lado = String(val(g, 'equipo', 'lado', 'tipo', 'team') || '');
+      if (esNuestro(lado) || /propio|nuestro|villa/i.test(lado)) propio = true;
+      else if (/rival|contrario/i.test(lado)) propio = false;
+      else if (/local/i.test(lado)) propio = somosLocal; else if (/visit/i.test(lado)) propio = !somosLocal;
+      else if (lado.trim().length > 3) propio = false;   // trae el nombre de otro equipo: es del rival
     }
     return {
       jugador: nombrePersona(nombreDe(val(g, 'jugador', 'nombre', 'goleador'))) || undefined,
@@ -182,26 +212,32 @@ function normalizarResultado(r, archivo) {
     };
   }) : [];
 
-  const alin = val(r, 'alineacion', 'titulares', 'alineacionPropia') || [];
+  // Alineación, cambios y expulsiones
+  const alin = val(r, 'alineacion', 'titulares', 'alineacionPropia') || arrayPorClave(r, /alinea|titular/i) || [];
   const alineacion = Array.isArray(alin) ? alin.map(j => ({
     dorsal: val(j, 'dorsal', 'numero', 'num') ?? '',
     nombre: nombrePersona(nombreDe(val(j, 'nombre', 'jugador') || j)),
     portero: !!(val(j, 'portero', 'esPortero') || /^por/i.test(String(val(j, 'posicion', 'demarcacion') || ''))),
     capitan: !!val(j, 'capitan', 'esCapitan')
   })).filter(j => j.nombre) : [];
-  const part = val(r, 'tambienParticiparon', 'participaron', 'suplentes', 'cambios') || [];
+  const part = val(r, 'tambienParticiparon', 'participaron', 'suplentes', 'cambios') || arrayPorClave(r, /particip|suplente|cambio/i) || [];
   const participaron = Array.isArray(part) ? [...new Set(part.map(x => nombrePersona(nombreDe(val(x, 'entra', 'jugadorEntra', 'nombre', 'jugador') || x))).filter(Boolean))] : [];
-  const exp = val(r, 'expulsiones', 'rojas', 'tarjetasRojas') || [];
+  const exp = val(r, 'expulsiones', 'rojas', 'tarjetasRojas') || arrayPorClave(r, /expuls|roja/i) || [];
   const expulsiones = Array.isArray(exp) ? exp.map(e => ({ propio: val(e, 'propio', 'esPropio') ?? true })) : [];
 
+  let campo = String(val(r, 'campo', 'estadio', 'instalacion', 'terreno') || '');
+  if (val(res, 'juegaEnPenalta') && !/pe[ñn]alta/i.test(campo)) campo = (campo ? campo + ' · ' : '') + 'Peñalta';
+
+  const escPropio = limpiarEscudo(val(res, 'escudoPropioUrl')), escRival = limpiarEscudo(val(res, 'escudoRivalUrl', 'escudoRival'));
+  const competicion = val(r, 'competicionMostrar', 'competicion', 'nombreCompeticion') || val(r, 'categoria') || categoria || '';
   return {
     id: String(val(r, 'codacta', 'codActa', 'id') || archivo),
     categoria, fecha,
-    competicion: String(val(r, 'competicionMostrar', 'competicion', 'nombreCompeticion', 'grupo') || categoria || ''),
+    competicion: competicionBonita(competicion),
     jornada: num(val(r, 'jornada', 'numJornada', 'num_jornada')),
-    campo: String(val(r, 'campo', 'estadio', 'instalacion', 'terreno') || ''),
-    local: equipo(nomLocal, val(r, 'local.escudo', 'escudoLocal', 'equipoLocal.escudo', 'escudo_local')),
-    visitante: equipo(nomVisit, val(r, 'visitante.escudo', 'escudoVisitante', 'equipoVisitante.escudo', 'escudo_visitante')),
+    campo,
+    local: equipo(nomLocal, somosLocal ? escPropio : (escRival || limpiarEscudo(val(r, 'local.escudo', 'escudoLocal', 'escudo_local')))),
+    visitante: equipo(nomVisit, somosLocal ? (escRival || limpiarEscudo(val(r, 'visitante.escudo', 'escudoVisitante', 'escudo_visitante'))) : escPropio),
     somosLocal, golesLocal: gl ?? 0, golesVisitante: gv ?? 0,
     goles, alineacion, participaron, expulsiones
   };
@@ -407,7 +443,11 @@ async function main() {
     }
 
     // Clasificación de la última jornada jugada (y la anterior, para ver si sube o es nuevo líder)
-    const jornada = Math.max(0, ...cal.filter(m => m.fecha && m.fecha <= finFinde && m.jornada).map(m => m.jornada));
+    const baseCat = categoriaDe(c.nombre);
+    const jornadaCal = Math.max(0, ...cal.filter(m => m.fecha && m.fecha <= finFinde && m.jornada).map(m => m.jornada));
+    const jornadaActas = Math.max(0, ...todos.filter(p => p.fecha <= finFinde && p.jornada && (p.categoria === baseCat || p.categoria.startsWith(baseCat + ' '))).map(p => p.jornada));
+    const jornada = Math.max(jornadaCal, jornadaActas);
+    log(`📊 ${c.categoria}: jornada ${jornada || '¿?'} (calendario ${jornadaCal || '-'}, actas ${jornadaActas || '-'})`);
     if (!jornada) continue;
     const urlCla = c.url.replace('/calendario', '/clasificaciones').replace(/&jornada=\d+/, '');
     const filas = filasClasificacion(await nextData(`${urlCla}&jornada=${jornada}`));
