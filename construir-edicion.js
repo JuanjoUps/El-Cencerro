@@ -298,9 +298,11 @@ function filasClasificacion(nd) {
 }
 
 /* ---------------- 3. Veteranos: próximo partido (Sofascore → veteranos-calendario.json) ---------------- */
-function proximoVeteranos(despues) {
-  const j = leer(path.join(FUENTES.carteles, 'veteranos-calendario.json'));
-  if (!j) return null;
+/* Veteranos (liga privada, sin RFFM): calendario de Sofascore que la app copia a datos/veteranos-calendario.json.
+   Devuelve el próximo partido y si había partido en el fin de semana de la edición (para "descansa" o "pendiente"). */
+function calendarioVeteranos(iniFinde, finFinde) {
+  const j = leer(R('datos', 'veteranos-calendario.json')) || leer(path.join(FUENTES.carteles, 'veteranos-calendario.json'));
+  if (!j) { log('ℹ️ Sin veteranos-calendario.json: el Veterano sale sin próximo partido'); return {}; }
   const filas = Array.isArray(j) ? j : (j.partidos || Object.values(j));
   diag('veteranos-calendario.json (2 primeras filas)', filas.slice(0, 2));
   const partidos = [];
@@ -314,10 +316,17 @@ function proximoVeteranos(despues) {
     const local = pareceEquipo(celdas[iN + 1]);
     const rival = local ? celdas[iN + 1] : celdas[iN - 1];
     if (!pareceEquipo(rival)) continue;
-    partidos.push({ fecha, rival, local });
+    const escudos = celdas.filter(c => /^https?:\/\/\S+$/.test(c));
+    const jornada = num(Array.isArray(f) ? f[7] : val(f, 'jornada'));
+    partidos.push({ fecha, rival, local, jornada, escudoRival: escudos.length >= 2 ? escudos[local ? 1 : 0] : '' });
   }
-  const px = partidos.filter(p => p.fecha > despues).sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
-  return px ? { rival: equipo(px.rival), local: px.local } : null;
+  const px = partidos.filter(p => p.fecha > finFinde).sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+  const enFinde = partidos.find(p => p.fecha >= iniFinde && p.fecha <= finFinde);
+  return {
+    proximo: px ? { rival: equipo(px.rival, px.escudoRival), local: px.local } : null,
+    enFinde: enFinde || null,
+    hayCalendario: true
+  };
 }
 
 /* ---------------- 4. Datos de este repo ---------------- */
@@ -426,11 +435,16 @@ async function main() {
   for (const c of clasificaciones) for (const f of c.filas) if (!f.escudo) f.escudo = ESCUDOS_WEB.get(slug(f.equipo)) || '';
   for (const px of Object.values(proximos)) if (px.rival && !px.rival.escudo) px.rival.escudo = ESCUDOS_WEB.get(slug(px.rival.nombre)) || '';
 
-  const pv = proximoVeteranos(finFinde);
-  if (pv) proximos['Veterano'] = pv;
+  // Veterano: igual que el resto (resultado, próximo partido, y descanso o pendiente si no hay acta)
+  const vet = calendarioVeteranos(iniFinde, finFinde);
+  if (vet.proximo) proximos['Veterano'] = vet.proximo;
+  if (vet.hayCalendario && !partidos.some(p => p.categoria === 'Veterano')) {
+    extras.push({ categoria: 'Veterano', competicion: 'Liga Veteranos Madrid Norte', jornada: vet.enFinde?.jornada,
+      descansa: true, aviso: vet.enFinde ? 'Resultado pendiente' : 'Descansa esta jornada' });
+  }
 
   // Lesionados (app de Apps Script → lesionados.json del repo del telediario)
-  const lesRaw = leer(path.join(FUENTES.telediario, 'lesionados.json'), []);
+  const lesRaw = leer(R('datos', 'lesionados.json')) || leer(path.join(FUENTES.telediario, 'lesionados.json'), []);
   diag('lesionados.json', lesRaw);
   const lesionados = buscar(lesRaw, o => typeof o.nombre === 'string').map(({ obj }) => ({
     nombre: nombrePersona(obj.nombre), categoria: categoriaDe(obj.categoria) || obj.categoria
