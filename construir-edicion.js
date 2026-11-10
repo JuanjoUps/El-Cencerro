@@ -106,7 +106,8 @@ function buscarEscudo(nombre, candidato) {
   // 1) ruta que ya trae el dato (relativa a algún repo) o URL
   if (candidato) {
     const c = String(candidato);
-    if (/^https?:\/\//.test(c)) return c;
+    // Si es una URL de la web, primero se mira si ya lo tenemos guardado en la caché (más fiable que depender de la web)
+    if (/^https?:\/\//.test(c)) return buscarEscudo(nombre, null) || c;
     const limpio = c.replace(/^\/+/, '');
     for (const base of [FUENTES.actas, FUENTES.carteles]) {
       if (existe(path.join(base, limpio))) return path.relative(RAIZ, path.join(base, limpio)).split(path.sep).join('/');
@@ -143,7 +144,8 @@ function nombreEquipo(n) {
   if (n !== n.toUpperCase()) return n;
   const SIGLAS = /^(CD|CF|AD|UD|EF|SD|CP|AT|RC|CDE|ACD|AD|SAD|FC|CDF|EMF|EFF)$/;
   return n.split(' ').map(w => /\./.test(w) || SIGLAS.test(w) || /^["'“”]?[A-D]["'“”]?$/.test(w) ? w
-    : /^(DE|DEL|LA|LAS|LOS|Y)$/.test(w) ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+    : /^(DE|DEL|Y)$/.test(w) ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+    .replace(/\b(de|del) (La|Las|Los|El)\b/g, (m, a, b) => `${a} ${b.toLowerCase()}`);
 }
 const equipo = (nombre, escudo) => ({ nombre: nombreEquipo(nombre) || '¿?', escudo: esNuestro(nombre) ? ESCUDO_CLUB : buscarEscudo(nombre, escudo) });
 const nombrePie = n => esNuestro(n) ? 'Villa' : nombreEquipo(n).replace(/^(C\.?\s?D\.?\s?E?\.?|A\.?\s?D\.?|C\.?\s?F\.?|U\.?\s?D\.?|E\.?\s?F\.?|S\.?\s?D\.?)\s+/i, '');
@@ -192,8 +194,15 @@ function normalizarResultado(r, archivo) {
   const textoCat = [val(r, 'categoria', 'categoriaMostrar', 'categoria_nombre'), val(r, 'competicion', 'nombreCompeticion', 'nombre_competicion'), archivo].filter(Boolean).join(' ');
   const categoria = categoriaDe(textoCat, nombrePropioLado);
 
-  // Goles
-  const golesLista = val(r, 'goles', 'goleadores', 'listaGoles') || arrayPorClave(r, /gol/i) || [];
+  // Goles: formato de Actas-Villa (golesPropios / golesRival) o lista única
+  const esPropiaPuerta = t => /propia\s+puerta|propia\s+meta|autogol/i.test(String(t || ''));
+  let golesLista;
+  if (Array.isArray(r.golesPropios) || Array.isArray(r.golesRival)) {
+    golesLista = [
+      ...(r.golesPropios || []).map(g => ({ ...g, propio: true })),
+      ...(r.golesRival || []).map(g => ({ ...g, propio: false }))
+    ];
+  } else golesLista = val(r, 'goles', 'goleadores', 'listaGoles') || arrayPorClave(r, /gol/i) || [];
   const goles = Array.isArray(golesLista) ? golesLista.map(g => {
     if (typeof g === 'string') return { jugador: nombrePersona(g), propio: true };
     let propio = val(g, 'propio', 'esPropio', 'nuestro', 'deEquipoPropio');
@@ -204,11 +213,14 @@ function normalizarResultado(r, archivo) {
       else if (/local/i.test(lado)) propio = somosLocal; else if (/visit/i.test(lado)) propio = !somosLocal;
       else if (lado.trim().length > 3) propio = false;   // trae el nombre de otro equipo: es del rival
     }
+    const nombreGol = nombreDe(val(g, 'jugador', 'nombre', 'goleador'));
+    const pp = !!val(g, 'propiaMeta', 'enPropiaMeta', 'autogol', 'pp') || esPropiaPuerta(nombreGol);
+    const min = num(val(g, 'minuto', 'min'));
     return {
-      jugador: nombrePersona(nombreDe(val(g, 'jugador', 'nombre', 'goleador'))) || undefined,
-      minuto: num(val(g, 'minuto', 'min')),
+      jugador: pp ? undefined : (nombrePersona(nombreGol) || undefined),
+      minuto: min && min < 200 ? min : undefined,
       propio: propio === undefined ? true : !!propio,
-      propiaMeta: !!val(g, 'propiaMeta', 'enPropiaMeta', 'autogol', 'pp')
+      propiaMeta: pp
     };
   }) : [];
 
@@ -223,7 +235,9 @@ function normalizarResultado(r, archivo) {
   const part = val(r, 'tambienParticiparon', 'participaron', 'suplentes', 'cambios') || arrayPorClave(r, /particip|suplente|cambio/i) || [];
   const participaron = Array.isArray(part) ? [...new Set(part.map(x => nombrePersona(nombreDe(val(x, 'entra', 'jugadorEntra', 'nombre', 'jugador') || x))).filter(Boolean))] : [];
   const exp = val(r, 'expulsiones', 'rojas', 'tarjetasRojas') || arrayPorClave(r, /expuls|roja/i) || [];
-  const expulsiones = Array.isArray(exp) ? exp.map(e => ({ propio: val(e, 'propio', 'esPropio') ?? true })) : [];
+  const expulsiones = Array.isArray(exp) ? exp.filter(e => e && e.expulsion !== false).map(e => ({
+    propio: val(e, 'propio', 'esPropio') ?? !/rival|contrario/i.test(String(val(e, 'jugador', 'nombre') || ''))
+  })) : [];
 
   let campo = String(val(r, 'campo', 'estadio', 'instalacion', 'terreno') || '');
   if (val(res, 'juegaEnPenalta') && !/pe[ñn]alta/i.test(campo)) campo = (campo ? campo + ' · ' : '') + 'Peñalta';
