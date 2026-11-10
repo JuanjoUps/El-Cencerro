@@ -1,0 +1,15 @@
+{
+  "numero": 1,
+  "desde": "2026-11-06",
+  "hasta": "2026-11-08",
+  "paginas": [
+    "pagina-01.png",
+    "pagina-02.png",
+    "pagina-03.png",
+    "pagina-04.png",
+    "pagina-05.png",
+    "pagina-06.png",
+    "pagina-07.png"
+  ],
+  "generado": "2026-11-10T06:05:12.700Z"
+}
