@@ -1096,8 +1096,9 @@ function bloqueClasificacion(c){
     filasHTML += `<tr class="${f.propio?'propio':''}"><td>${f.pos}º</td><td class="eq">${escudo({nombre:f.equipo,escudo:f.escudo})}${esc(nombreCorto(f.equipo))}</td><td>${f.pj}</td><td>${f.gf-f.gc>0?'+':''}${f.gf-f.gc}</td><td class="pts">${f.pts}</td></tr>`;
     anterior = i;
   });
+  if(c.filas.length===1 && c.totalEquipos) filasHTML += `<tr class="salto"><td colspan="5">de ${c.totalEquipos} equipos</td></tr>`;
   return `<div class="tabla-bloque">
-    <div class="kicker-fila"><span class="kicker">${esc(cats.length>1 ? listaY(cats).replace(/Benjamín A y Benjamín B/,'Benjamín A y B') : c.categoria)}</span><span class="kicker-info">${esc(c.competicion)} · J${c.jornada}</span></div>
+    <div class="kicker-fila"><span class="kicker">${esc(cats.length>1 ? listaY(cats).replace(/Benjamín A y Benjamín B/,'Benjamín A y B') : c.categoria)}</span><span class="kicker-info">${esc(c.competicion)}${c.jornada?' · J'+c.jornada:''}</span></div>
     <table><thead><tr><th>#</th><th class="eq">Equipo</th><th>PJ</th><th>DG</th><th>PTS</th></tr></thead><tbody>${filasHTML}</tbody></table>
     ${cats.map(cat=>proximoHTML(cat, cats.length>1)).join('')}</div>`;
 }
