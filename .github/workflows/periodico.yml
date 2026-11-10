@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p scripts datos fotos
           for f in construir-edicion.js renderizar.js cerrar-edicion.js; do
-            if [ -f "$f" ]; then mv -f "$f" "scripts/$f"; fi
+            if [ -f "$f" ]; then cp -f "$f" "scripts/$f"; fi
           done
           for f in calendarios.json cronicas.json noticias.json; do
             if [ -f "$f" ] && [ ! -f "datos/$f" ]; then cp "$f" "datos/$f"; fi
@@ -79,4 +79,8 @@ jobs:
           git add -A estado.json datos fotos archivo ultimo
           git diff --cached --quiet && exit 0
           git commit -m "Cencerro Nº $(node -p "require('./estado.json').numero")"
-          for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done
+          for i in 1 2 3; do
+            if git pull --rebase --autostash && git push; then echo "✅ Guardado"; exit 0; fi
+            sleep 5
+          done
+          echo "❌ No se pudo guardar en el repo"; exit 1
