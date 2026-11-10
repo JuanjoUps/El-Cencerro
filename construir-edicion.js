@@ -521,20 +521,36 @@ async function main() {
       descansa: true, aviso: vet.enFinde ? 'Resultado pendiente' : 'Descansa esta jornada' });
   }
 
-  // Clasificación del Veterano (veterano-clasificacion.json: solo nuestra posición, sin tabla completa)
-  const vc = ['veterano-clasificacion.json', 'veteranos-clasificacion.json']
-    .map(n => leer(R('datos', n)) || leer(R(n)) || leer(path.join(FUENTES.carteles, n))).find(Boolean);
-  if (vc && num(vc.posicionPropia)) {
-    const jug = vet.jugados || [];
-    const gf = num(vc.golesFavorPropios) || 0, gc = num(vc.golesContraPropios) || 0;
-    const jVet = Math.max(0, ...jug.map(p => p.jornada || 0));
+  // Clasificación del Veterano (captura de SofaScore en Contenido-Semanal → datos/veteranos-clasificacion.json).
+  // Sirve tanto una tabla completa (se enseña el de delante y el de detrás) como un resumen con solo nuestra posición.
+  const vc = ['veteranos-clasificacion.json', 'veterano-clasificacion.json']
+    .flatMap(n => [R('datos', n), R(n), path.join(FUENTES.carteles, n)]).map(f => leer(f)).find(Boolean);
+  diag('veteranos-clasificacion.json', vc);
+  const jugVet = vet.jugados || [];
+  const jVet = Math.max(0, ...jugVet.map(p => p.jornada || 0)) || null;
+  const compVet = partidos.find(p => p.categoria === 'Veterano')?.competicion || 'Liga Veteranos';
+  const filasVet = vc ? buscar(vc, o => num(val(o, 'pos', 'posicion', 'position', 'puesto', 'rank')) !== undefined &&
+      num(val(o, 'pts', 'puntos', 'points')) !== undefined && !!nombreDe(val(o, 'equipo', 'team', 'nombre', 'name')))
+    .map(({ obj: o }) => {
+      const eq = nombreDe(val(o, 'equipo', 'team', 'nombre', 'name'));
+      const gf = num(val(o, 'gf', 'golesFavor', 'goles_favor', 'scoresFor')), gc = num(val(o, 'gc', 'golesContra', 'goles_contra', 'scoresAgainst'));
+      const dg = num(val(o, 'dg', 'diferencia', 'goalDifference'));
+      return { pos: num(val(o, 'pos', 'posicion', 'position', 'puesto', 'rank')), equipo: esNuestro(eq) ? 'C.D. Villa de Buitrago' : nombreEquipo(eq),
+        escudo: esNuestro(eq) ? ESCUDO_CLUB : buscarEscudo(eq, val(o, 'escudo', 'logo')), pj: num(val(o, 'pj', 'jugados', 'partidos', 'matches')) ?? '',
+        gf: gf ?? (dg ?? 0), gc: gc ?? 0, pts: num(val(o, 'pts', 'puntos', 'points')), propio: esNuestro(eq) ? 'Veterano' : false };
+    }).sort((x, y) => x.pos - y.pos) : [];
+  if (filasVet.some(f => f.propio)) {
+    clasificaciones.push({ categoria: 'Veterano', competicion: compVet, jornada: jVet, filas: filasVet });
+    const f = filasVet.find(f => f.propio);
+    log(`📊 Veterano: ${f.pos}º de ${filasVet.length} con ${f.pts} puntos (tabla completa)`);
+  } else if (vc && num(vc.posicionPropia)) {
     clasificaciones.push({
-      categoria: 'Veterano', competicion: partidos.find(p => p.categoria === 'Veterano')?.competicion || 'Liga Veteranos',
-      jornada: jVet || null, totalEquipos: num(vc.totalEquipos) || null,
-      filas: [{ pos: num(vc.posicionPropia), equipo: 'C.D. Villa de Buitrago', escudo: ESCUDO_CLUB, pj: jug.length || '', gf, gc, pts: num(vc.puntosPropios) || 0, propio: 'Veterano' }]
+      categoria: 'Veterano', competicion: compVet, jornada: jVet, totalEquipos: num(vc.totalEquipos) || null,
+      filas: [{ pos: num(vc.posicionPropia), equipo: 'C.D. Villa de Buitrago', escudo: ESCUDO_CLUB, pj: jugVet.length || '',
+        gf: num(vc.golesFavorPropios) || 0, gc: num(vc.golesContraPropios) || 0, pts: num(vc.puntosPropios) || 0, propio: 'Veterano' }]
     });
     log(`📊 Veterano: ${vc.posicionPropia}º de ${vc.totalEquipos || '?'} con ${vc.puntosPropios} puntos`);
-  } else log('ℹ️ Sin veterano-clasificacion.json');
+  } else log('ℹ️ Sin clasificación del Veterano' + (vc ? ' (formato no reconocido: lánzalo con diagnóstico)' : ''));
 
   // Lesionados (app de Apps Script → lesionados.json del repo del telediario)
   const lesRaw = leer(R('datos', 'lesionados.json')) || leer(path.join(FUENTES.telediario, 'lesionados.json'), []);
