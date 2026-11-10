@@ -361,7 +361,7 @@ function calendarioVeteranos(iniFinde, finFinde) {
   for (const f of filas) {
     if (formatoCarteles && Array.isArray(f)) {
       const fecha = fechaISO(String(f[0]));
-      if (fecha && f[1]) partidos.push({ fecha, rival: String(f[1]), local: !!+f[2], jornada: num(f[7]), escudoRival: '' });
+      if (fecha && f[1]) partidos.push({ fecha, rival: String(f[1]), local: !!+f[2], terminado: !!+f[3], jornada: num(f[7]), escudoRival: '' });
       continue;
     }
     const celdas = Array.isArray(f) ? f.map(String) : Object.values(f || {}).map(String);
@@ -381,6 +381,7 @@ function calendarioVeteranos(iniFinde, finFinde) {
   const enFinde = partidos.find(p => p.fecha >= iniFinde && p.fecha <= finFinde);
   return {
     proximo: px ? { rival: equipo(px.rival, px.escudoRival), local: px.local } : null,
+    jugados: partidos.filter(p => p.fecha <= finFinde && (p.terminado || p.terminado === undefined)),
     enFinde: enFinde || null,
     hayCalendario: true
   };
@@ -407,17 +408,33 @@ async function main() {
   const categoriasCal = leerCategoriasCalendario();
   const todos = leerResultados().filter(p => p.fecha <= hoyISO());
 
-  // ¿Qué partidos entran? Los jugados desde el número anterior. Si no hay nuevos, se rehace el último número.
+  // ¿Qué partidos entran? Los que todavía no han salido en ningún número (aunque el acta llegue tarde).
+  //  - Si hay partidos posteriores al último número → número nuevo (con los atrasados que hubiera).
+  //  - Si solo hay atrasados de ese mismo fin de semana y aún es antes del jueves → se meten al rehacer ese número.
+  //  - Si no hay nada nuevo → se rehace el último número tal cual.
+  const claveP = p => `${p.categoria}|${p.fecha}`;
+  const enRango = p => estado.desde && p.fecha >= estado.desde && p.fecha <= estado.hasta;
+  const ultimas = new Set(estado.claves || todos.filter(enRango).map(claveP));
+  const incluidos = new Set([...(estado.incluidos || []), ...ultimas]);
+  const limite = estado.hasta ? sumarDias(estado.hasta, -3) : sumarDias(hoyISO(), -DIAS_PRIMERA_EDICION);
+  const sinPublicar = todos.filter(p => !incluidos.has(claveP(p)) && p.fecha >= limite);
+  const posteriores = sinPublicar.filter(p => !estado.hasta || p.fecha > estado.hasta);
   let partidos, numero, esNueva, portadasAnteriores;
-  const nuevos = estado.hasta ? todos.filter(p => p.fecha > estado.hasta) : todos.filter(p => p.fecha >= sumarDias(hoyISO(), -DIAS_PRIMERA_EDICION));
-  if (nuevos.length) {
-    partidos = nuevos; numero = (estado.numero || 0) + 1; esNueva = true;
+  if (posteriores.length) {
+    partidos = sinPublicar; numero = (estado.numero || 0) + 1; esNueva = true;
     portadasAnteriores = estado.portada && estado.portada !== 'manual' ? [estado.portada] : [];
-  } else if (estado.desde) {
-    partidos = todos.filter(p => p.fecha >= estado.desde && p.fecha <= estado.hasta); numero = estado.numero; esNueva = false;
+  } else if (estado.numero) {
+    const aTiempo = hoyISO() <= sumarDias(estado.hasta, 4);
+    partidos = todos.filter(p => ultimas.has(claveP(p)) || (aTiempo && sinPublicar.includes(p)));
+    numero = estado.numero; esNueva = false;
     portadasAnteriores = estado.portadasAnteriores || [];
-    log(`ℹ️ No hay partidos nuevos: se regenera el Nº ${numero}`);
+    const tarde = aTiempo ? sinPublicar.length : 0;
+    log(`ℹ️ No hay partidos nuevos: se rehace el Nº ${numero}` + (tarde ? ` (+${tarde} con acta llegada tarde)` : ''));
+    if (!aTiempo && sinPublicar.length) log(`ℹ️ ${sinPublicar.length} acta(s) atrasada(s) saldrán en el Nº ${numero + 1}`);
   } else partidos = [];
+  partidos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const claves = partidos.map(claveP);
+  const incluidosNuevos = [...new Set([...incluidos, ...claves])].slice(-300);
 
   const salida = R('salida');
   fs.mkdirSync(salida, { recursive: true });
@@ -504,6 +521,21 @@ async function main() {
       descansa: true, aviso: vet.enFinde ? 'Resultado pendiente' : 'Descansa esta jornada' });
   }
 
+  // Clasificación del Veterano (veterano-clasificacion.json: solo nuestra posición, sin tabla completa)
+  const vc = ['veterano-clasificacion.json', 'veteranos-clasificacion.json']
+    .map(n => leer(R('datos', n)) || leer(R(n)) || leer(path.join(FUENTES.carteles, n))).find(Boolean);
+  if (vc && num(vc.posicionPropia)) {
+    const jug = vet.jugados || [];
+    const gf = num(vc.golesFavorPropios) || 0, gc = num(vc.golesContraPropios) || 0;
+    const jVet = Math.max(0, ...jug.map(p => p.jornada || 0));
+    clasificaciones.push({
+      categoria: 'Veterano', competicion: partidos.find(p => p.categoria === 'Veterano')?.competicion || 'Liga Veteranos',
+      jornada: jVet || null, totalEquipos: num(vc.totalEquipos) || null,
+      filas: [{ pos: num(vc.posicionPropia), equipo: 'C.D. Villa de Buitrago', escudo: ESCUDO_CLUB, pj: jug.length || '', gf, gc, pts: num(vc.puntosPropios) || 0, propio: 'Veterano' }]
+    });
+    log(`📊 Veterano: ${vc.posicionPropia}º de ${vc.totalEquipos || '?'} con ${vc.puntosPropios} puntos`);
+  } else log('ℹ️ Sin veterano-clasificacion.json');
+
   // Lesionados (app de Apps Script → lesionados.json del repo del telediario)
   const lesRaw = leer(R('datos', 'lesionados.json')) || leer(path.join(FUENTES.telediario, 'lesionados.json'), []);
   diag('lesionados.json', lesRaw);
@@ -537,7 +569,7 @@ async function main() {
     lesionados, noticias, partidos: [...partidos, ...extras], clasificaciones, proximos
   };
   fs.writeFileSync(path.join(salida, 'edicion.js'), `// Generado por construir-edicion.js — no editar a mano\nwindow.EDICION_REAL = ${JSON.stringify(edicion, null, 1)};\n`);
-  fs.writeFileSync(path.join(salida, 'meta.json'), JSON.stringify({ numero, esNueva, desde, hasta, portadasAnteriores }, null, 2));
+  fs.writeFileSync(path.join(salida, 'meta.json'), JSON.stringify({ numero, esNueva, desde, hasta, portadasAnteriores, claves, incluidos: incluidosNuevos }, null, 2));
 
   // Texto sugerido para el pie de la publicación de Instagram
   const sello = p => { const r = resultado(p); return r === 'V' ? 'victoria' : r === 'E' ? 'empate' : 'derrota'; };
