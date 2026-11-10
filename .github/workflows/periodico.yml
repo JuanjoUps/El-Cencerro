@@ -2,7 +2,7 @@ name: El Cencerro de la Sede
 
 on:
   schedule:
-    - cron: '0 8 * * 1'   # lunes a las 9:00 en Madrid (horario de invierno)
+    - cron: '0 8 * * 2'   # martes a las 9:00 en Madrid (horario de invierno)
   workflow_dispatch:
     inputs:
       diagnostico:
@@ -67,7 +67,7 @@ jobs:
         if: steps.construir.outputs.hay_edicion == 'true'
         run: node scripts/renderizar.js
 
-      - name: Cerrar la edición (ultimo/, estado y archivo)
+      - name: Cerrar la edición (estado y archivo)
         if: steps.construir.outputs.hay_edicion == 'true'
         run: node scripts/cerrar-edicion.js
 
