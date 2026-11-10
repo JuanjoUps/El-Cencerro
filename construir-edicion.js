@@ -4,8 +4,9 @@
  *
  * Lee SIN modificar:
  *   fuentes/actas      → repo Actas-Villa (resultados-partidos/*.json, escudo, mascota)
- *   fuentes/carteles   → repo Pruebas-carteles-partidos (calendarios-categorias.json, veteranos-calendario.json, escudos-cache/)
- *   fuentes/telediario → repo del telediario (lesionados.json)
+ *   fuentes/carteles   → (opcional) repo Pruebas-carteles-partidos (veteranos-calendario.json, escudos-cache/)
+ *   fuentes/telediario → (opcional) repo del telediario (lesionados.json)
+ * Las URLs de calendario de cada categoría están en datos/calendarios.json de este repo.
  * Y de este repo:
  *   datos/cronicas.json, datos/noticias.json, fotos/, estado.json
  * Además consulta la web de la RFFM (calendario y clasificación) para próximo partido y tabla.
@@ -125,6 +126,16 @@ function buscarEscudo(nombre, candidato) {
   return exacto ? exacto.ruta : '';
 }
 const ESCUDO_CLUB = 'escudo-club.png';
+/* Escudos que trae la propia web de la RFFM (calendario y clasificación), por nombre de equipo: respaldo si no hay caché */
+const ESCUDOS_WEB = new Map();
+function urlEscudo(u) {
+  if (!u || typeof u !== 'string') return '';
+  if (/^https?:\/\//.test(u)) return u;
+  if (u.startsWith('//')) return 'https:' + u;
+  if (u.startsWith('/')) return 'https://www.rffm.es' + u;
+  return '';
+}
+function apuntarEscudo(nombre, u) { const url = urlEscudo(u); if (nombre && url && !ESCUDOS_WEB.has(slug(nombre))) ESCUDOS_WEB.set(slug(nombre), url); }
 /* "CD TRES CANTOS" → "CD Tres Cantos" (siglas y abreviaturas se quedan en mayúsculas) */
 function nombreEquipo(n) {
   n = String(n || '').trim().replace(/\s+/g, ' ');
@@ -222,8 +233,8 @@ const resultado = p => (golesPropios(p) > golesRival(p) ? 'V' : golesPropios(p) 
 let CODIGOS = new Set(CODIGOS_CONOCIDOS);
 
 function leerCategoriasCalendario() {
-  const j = leer(path.join(FUENTES.carteles, 'calendarios-categorias.json'));
-  if (!j) { log('⚠️ No se encontró calendarios-categorias.json en el repo de carteles'); return []; }
+  const j = leer(R('datos', 'calendarios.json')) || leer(path.join(FUENTES.carteles, 'calendarios-categorias.json'));
+  if (!j) { log('⚠️ No se encontró datos/calendarios.json'); return []; }
   diag('calendarios-categorias.json', j);
   const entradas = Array.isArray(j) ? j : Object.entries(j).map(([k, v]) => (typeof v === 'object' ? { ...v, _clave: k } : { _clave: k, url: v }));
   const out = [];
@@ -256,7 +267,7 @@ async function nextData(url) {
 }
 
 function partidosCalendario(nd) {
-  return buscar(nd, o => 'codigo_equipo_local' in o || 'codigoEquipoLocal' in o).map(({ obj: o, ctx }) => ({
+  const lista = buscar(nd, o => 'codigo_equipo_local' in o || 'codigoEquipoLocal' in o).map(({ obj: o, ctx }) => ({
     fecha: fechaISO(val(o, 'fecha', 'fecha_partido', 'fechaPartido')),
     jornada: num(val(o, 'jornada')) ?? ctx.jornada,
     codLocal: String(val(o, 'codigo_equipo_local', 'codigoEquipoLocal') || ''),
@@ -266,11 +277,13 @@ function partidosCalendario(nd) {
     escLocal: val(o, 'escudo_equipo_local', 'escudo_local', 'url_img_local'),
     escVisit: val(o, 'escudo_equipo_visitante', 'escudo_visitante', 'url_img_visitante')
   }));
+  lista.forEach(m => { apuntarEscudo(m.local, m.escLocal); apuntarEscudo(m.visitante, m.escVisit); });
+  return lista;
 }
 
 function filasClasificacion(nd) {
   const filas = buscar(nd, o => 'codequipo' in o).map(({ obj: o }) => o);
-  return filas.map((o, i) => ({
+  const out = filas.map((o, i) => ({
     pos: num(val(o, 'posicion', 'pos', 'puesto', 'orden')) ?? i + 1,
     codigo: String(o.codequipo),
     equipo: nombreDe(val(o, 'nombre', 'equipo', 'nombre_equipo')),
@@ -280,6 +293,8 @@ function filasClasificacion(nd) {
     gc: num(val(o, 'goles_en_contra', 'gc', 'goles_contra', 'golesContra')) ?? 0,
     pts: num(val(o, 'puntos', 'pts')) ?? 0
   }));
+  out.forEach(f => apuntarEscudo(f.equipo, f.escudo));
+  return out;
 }
 
 /* ---------------- 3. Veteranos: próximo partido (Sofascore → veteranos-calendario.json) ---------------- */
@@ -403,6 +418,14 @@ async function main() {
   }
   if (!categoriasCal.length) log('ℹ️ Sin calendarios: no habrá próximo partido, descansos ni clasificación');
 
+  // Partidos sin escudo en la caché: se usa el de la web de la RFFM si apareció en calendario o clasificación
+  for (const p of partidos) for (const lado of ['local', 'visitante']) {
+    const e = p[lado];
+    if (e && !e.escudo) e.escudo = ESCUDOS_WEB.get(slug(e.nombre)) || '';
+  }
+  for (const c of clasificaciones) for (const f of c.filas) if (!f.escudo) f.escudo = ESCUDOS_WEB.get(slug(f.equipo)) || '';
+  for (const px of Object.values(proximos)) if (px.rival && !px.rival.escudo) px.rival.escudo = ESCUDOS_WEB.get(slug(px.rival.nombre)) || '';
+
   const pv = proximoVeteranos(finFinde);
   if (pv) proximos['Veterano'] = pv;
 
@@ -423,7 +446,8 @@ async function main() {
     const cr = cronicas.find(c => (categoriaDe(c.categoria) || c.categoria) === p.categoria && c.texto);
     if (cr) p.cronica = { autor: cr.autor || `Entrenador del ${p.categoria}`, titular: cr.titular || null, texto: cr.texto };
     const s = slug(p.categoria);
-    const foto = fotos.find(f => f.s === s || new RegExp(`^${s}-\\d+$`).test(f.s));
+    // Una sola foto por equipo: la que se llama exactamente como la categoría y, si no, la de número más bajo
+    const foto = fotos.find(f => f.s === s) || fotos.filter(f => new RegExp(`^${s}-\\d+$`).test(f.s)).sort((a, b) => a.s.localeCompare(b.s, 'es', { numeric: true }))[0];
     if (foto) p.foto = foto.ruta;
   }
   // La foto de una noticia se busca por nombre de archivo (sirve aunque ya esté archivada)
