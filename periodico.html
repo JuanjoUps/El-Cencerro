@@ -1104,7 +1104,7 @@ function crearClasificaciones(cont){
   const cubiertas = new Set(tablas.flatMap(c=>c.filas.filter(f=>f.propio).map(f=>f.propio)));
   // Categorías sin clasificación oficial (veteranos): solo su próximo partido
   const sueltas = ordenar(EDICION.partidos).filter(p=>!cubiertas.has(p.categoria) && EDICION.proximos?.[p.categoria])
-    .map(p=>`<div class="tabla-bloque"><div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span><span class="kicker-info">Sin clasificación oficial</span></div>${proximoHTML(p.categoria,false)}</div>`);
+    .map(p=>`<div class="tabla-bloque"><div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span><span class="kicker-info">${esc(p.competicion||"")}</span></div>${proximoHTML(p.categoria,false)}</div>`);
   const bloques = [...tablas.map(bloqueClasificacion), ...sueltas];
   if(!bloques.length) return;
   const pagina = () => { const pg=nuevaPagina(cont); pg.innerHTML=`${barra('Clasificación · '+fechasEdicion().corto)}<h2 class="titular" style="font-size:54px">Cómo van y a quién toca</h2><div class="cuerpo"><div class="clasi-grid"></div></div>`; return pg.querySelector('.cuerpo'); };
