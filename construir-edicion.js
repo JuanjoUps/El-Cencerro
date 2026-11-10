@@ -351,12 +351,19 @@ function filasClasificacion(nd) {
 /* Veteranos (liga privada, sin RFFM): calendario de Sofascore que la app copia a datos/veteranos-calendario.json.
    Devuelve el próximo partido y si había partido en el fin de semana de la edición (para "descansa" o "pendiente"). */
 function calendarioVeteranos(iniFinde, finFinde) {
-  const j = leer(R('datos', 'veteranos-calendario.json')) || leer(path.join(FUENTES.carteles, 'veteranos-calendario.json'));
+  const j = leer(R('datos', 'veteranos-calendario.json')) || leer(R('veteranos-calendario.json')) || leer(path.join(FUENTES.carteles, 'veteranos-calendario.json'));
   if (!j) { log('ℹ️ Sin veteranos-calendario.json: el Veterano sale sin próximo partido'); return {}; }
   const filas = Array.isArray(j) ? j : (j.partidos || Object.values(j));
   diag('veteranos-calendario.json (2 primeras filas)', filas.slice(0, 2));
   const partidos = [];
+  // Formato de la app de carteles: [fecha, rival, esLocal, terminado, golesPropio, golesRival, hora, jornada]
+  const formatoCarteles = /fecha,rival,esLocal/.test(j.formato || '');
   for (const f of filas) {
+    if (formatoCarteles && Array.isArray(f)) {
+      const fecha = fechaISO(String(f[0]));
+      if (fecha && f[1]) partidos.push({ fecha, rival: String(f[1]), local: !!+f[2], jornada: num(f[7]), escudoRival: '' });
+      continue;
+    }
     const celdas = Array.isArray(f) ? f.map(String) : Object.values(f || {}).map(String);
     const fecha = celdas.map(fechaISO).find(Boolean);
     const pareceEquipo = c => c && /[a-záéíóúñ]{3,}/i.test(c) && !fechaISO(c) && !/^\d/.test(c) && !/^https?:/.test(c);
