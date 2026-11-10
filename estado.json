@@ -33,6 +33,7 @@
       "El {cat} suma un punto ante {rival}",
       "El {cat} se queda sin premio",
       "El {cat} lo da todo",
+      "Con estos tres puntos, el {cat} escala hasta el {n}º puesto.",
       "lejos de casa",
       "Partido de aprendizaje para el {cat} {lugar} contra {rival}.",
       "Un sábado más de fútbol y amistad.",
@@ -71,5 +72,5 @@
       "¡Que suene el cencerro!"
     ]
   ],
-  "actualizado": "2026-11-10T11:18:52.403Z"
+  "actualizado": "2026-11-10T18:34:53.288Z"
 }
