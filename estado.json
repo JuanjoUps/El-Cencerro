@@ -4,6 +4,28 @@
   "hasta": "2026-11-08",
   "portada": "Senior",
   "portadasAnteriores": [],
+  "claves": [
+    "Prebenjamín|2026-11-06",
+    "Alevín|2026-11-07",
+    "Infantil|2026-11-07",
+    "Benjamín B|2026-11-07",
+    "Benjamín A|2026-11-07",
+    "Senior|2026-11-08",
+    "Cadete|2026-11-08",
+    "Femenino|2026-11-08",
+    "Veterano|2026-11-08"
+  ],
+  "incluidos": [
+    "Prebenjamín|2026-11-06",
+    "Alevín|2026-11-07",
+    "Infantil|2026-11-07",
+    "Benjamín B|2026-11-07",
+    "Benjamín A|2026-11-07",
+    "Senior|2026-11-08",
+    "Cadete|2026-11-08",
+    "Femenino|2026-11-08",
+    "Veterano|2026-11-08"
+  ],
   "frasesRecientes": [
     [
       "{gp} goles del {cat} ante {rival}",
@@ -49,5 +71,5 @@
       "¡Que suene el cencerro!"
     ]
   ],
-  "actualizado": "2026-11-10T07:44:39.919Z"
+  "actualizado": "2026-11-10T11:18:52.403Z"
 }
