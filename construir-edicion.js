@@ -142,7 +142,7 @@ function apuntarEscudo(nombre, u) { const url = urlEscudo(u); if (nombre && url 
 function nombreEquipo(n) {
   n = String(n || '').trim().replace(/\s+/g, ' ');
   if (n !== n.toUpperCase()) return n;
-  const SIGLAS = /^(CD|CF|AD|UD|EF|SD|CP|AT|RC|CDE|ACD|AD|SAD|FC|CDF|EMF|EFF)$/;
+  const SIGLAS = /^(CD|CF|AD|UD|EF|SD|CP|AT|RC|CDE|ACD|SAD|FC|CDF|EMF|EFF|IE|ACR|UDC|CDC)$/;
   return n.split(' ').map(w => /\./.test(w) || SIGLAS.test(w) || /^["'“”]?[A-D]["'“”]?$/.test(w) ? w
     : /^(DE|DEL|Y)$/.test(w) ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
     .replace(/\b(de|del) (La|Las|Los|El)\b/g, (m, a, b) => `${a} ${b.toLowerCase()}`);
@@ -470,7 +470,7 @@ async function main() {
     const previas = jornada > 1 ? filasClasificacion(await nextData(`${urlCla}&jornada=${jornada - 1}`)) : [];
     const tabla = filas.map(f => {
       const propio = CODIGOS.has(f.codigo) || esNuestro(f.equipo) ? categoriaDe(c.nombre, f.equipo) : false;
-      return { pos: f.pos, codigo: f.codigo, equipo: f.equipo, escudo: propio ? ESCUDO_CLUB : buscarEscudo(f.equipo, f.escudo), pj: f.pj, gf: f.gf, gc: f.gc, pts: f.pts, propio };
+      return { pos: f.pos, codigo: f.codigo, equipo: nombreEquipo(f.equipo), escudo: propio ? ESCUDO_CLUB : buscarEscudo(f.equipo, f.escudo), pj: f.pj, gf: f.gf, gc: f.gc, pts: f.pts, propio };
     }).sort((a, b) => a.pos - b.pos);
     clasificaciones.push({ categoria: categoriaDe(c.nombre), competicion: partidos.find(p => p.categoria.startsWith(categoriaDe(c.nombre)))?.competicion || c.nombre, jornada, filas: tabla });
     for (const f of tabla.filter(f => f.propio)) {
