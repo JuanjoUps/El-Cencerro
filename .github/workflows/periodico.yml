@@ -23,6 +23,18 @@ jobs:
       - name: Repo del periódico
         uses: actions/checkout@v4
 
+      - name: Colocar archivos en su carpeta (por si se subieron sueltos a la raíz)
+        run: |
+          mkdir -p scripts datos fotos
+          for f in construir-edicion.js renderizar.js cerrar-edicion.js; do
+            if [ -f "$f" ]; then mv -f "$f" "scripts/$f"; fi
+          done
+          for f in calendarios.json cronicas.json noticias.json; do
+            if [ -f "$f" ] && [ ! -f "datos/$f" ]; then cp "$f" "datos/$f"; fi
+          done
+          [ -f estado.json ] || echo '{}' > estado.json
+          echo "Contenido del repo:"; ls -R scripts datos | head -40
+
       - name: Traer Actas-Villa (resultados, es público)
         uses: actions/checkout@v4
         with:
