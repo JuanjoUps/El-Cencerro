@@ -2,6 +2,7 @@
 /*
  * El Cencerro de la Sede — tras enviar la edición:
  *  - actualiza estado.json (número, fechas, qué fue portada, frases usadas en los últimos números)
+ *  - deja las páginas y el pie en ultimo/ para verlas en la app
  *  - mueve crónicas, noticias y fotos usadas a archivo/<número>/ para que no se repitan la semana siguiente
  *    (si se regenera el mismo número, construir-edicion.js las vuelve a leer de ahí)
  */
@@ -50,4 +51,13 @@ for (const f of (fs.existsSync(R('fotos')) ? fs.readdirSync(R('fotos')) : [])) {
   fs.renameSync(R('fotos', f), path.join(destino, 'fotos', f));
   fotos++;
 }
+// Copiar las páginas y el pie a ultimo/ (lo que enseña la app en la pestaña "Último Cencerro")
+const ULTIMO = R('ultimo');
+fs.rmSync(ULTIMO, { recursive: true, force: true });
+fs.mkdirSync(ULTIMO, { recursive: true });
+const paginas = fs.readdirSync(R('salida')).filter(f => /^pagina-\d+\.png$/.test(f)).sort();
+paginas.forEach(f => fs.copyFileSync(R('salida', f), path.join(ULTIMO, f)));
+if (fs.existsSync(R('salida', 'pie-instagram.txt'))) fs.copyFileSync(R('salida', 'pie-instagram.txt'), path.join(ULTIMO, 'pie-instagram.txt'));
+fs.writeFileSync(path.join(ULTIMO, 'info.json'), JSON.stringify({ numero: meta.numero, desde: meta.desde, hasta: meta.hasta, paginas, generado: new Date().toISOString() }, null, 2) + '\n');
+
 console.log(`📁 Nº ${meta.numero} cerrado · portada: ${nuevo.portada} · fotos archivadas: ${fotos}`);
