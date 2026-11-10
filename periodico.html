@@ -990,7 +990,9 @@ function paginar(cont, piezas){
       if(partible && (H - y >= 520 || paginaVacia)){
         // Crónica larga: ocupa el alto que queda, ajusta letra y lo que no quepa sigue en la página siguiente
         el.style.height = (H - y)+'px';
-        const resto = textoAjustado(el.querySelector('.cronica'), el._tokens, el._opts);
+        let resto = textoAjustado(el.querySelector('.cronica'), el._tokens, el._opts);
+        // Si solo sobran unas pocas palabras, se aprieta un poco la letra antes que abrir otra página para una línea
+        if(resto.length && resto.length < 45) resto = textoAjustado(el.querySelector('.cronica'), el._tokens, {...el._opts, min: 17});
         if(resto.length) cola.unshift({el:crearContinuacion(el, resto, ANCHO_CUERPO), span:3});
         final = H;
       } else if(!paginaVacia){
