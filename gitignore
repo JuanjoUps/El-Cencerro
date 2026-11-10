@@ -1,5 +1,3 @@
 node_modules/
 fuentes/
-salida/*.png
-salida/meta.json
-salida/resultado.json
+salida/
