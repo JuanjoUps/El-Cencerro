@@ -60,6 +60,15 @@ fs.mkdirSync(ULTIMO, { recursive: true });
 const paginas = fs.readdirSync(R('salida')).filter(f => /^pagina-\d+\.png$/.test(f)).sort();
 paginas.forEach(f => fs.copyFileSync(R('salida', f), path.join(ULTIMO, f)));
 if (fs.existsSync(R('salida', 'pie-instagram.txt'))) fs.copyFileSync(R('salida', 'pie-instagram.txt'), path.join(ULTIMO, 'pie-instagram.txt'));
+// Puntuación de relevancia (para mandarla a Telegram y ver por qué salió cada noticia donde salió)
+if (Array.isArray(res.relevancia) && res.relevancia.length) {
+  const medallas = ['🥇', '🥈', '🥉'];
+  const lineas = res.relevancia.map((r, i) => `${medallas[i] || '▫️'} ${r.categoria}: ${r.total}` +
+    (r.categoria === res.portada ? '  ← PORTADA' : '') + (r.puedePortada ? '' : '  (nunca portada)') +
+    `\n     ${r.motivos.join(' · ')}`);
+  fs.writeFileSync(path.join(ULTIMO, 'relevancia.txt'),
+    `📊 Relevancia · Cencerro Nº ${meta.numero}\n\n` + lineas.join('\n') + '\n');
+}
 fs.writeFileSync(path.join(ULTIMO, 'info.json'), JSON.stringify({ numero: meta.numero, desde: meta.desde, hasta: meta.hasta, paginas, generado: new Date().toISOString() }, null, 2) + '\n');
 
 console.log(`📁 Nº ${meta.numero} cerrado · portada: ${nuevo.portada} · fotos archivadas: ${fotos}`);
