@@ -261,8 +261,9 @@ const ORDEN_CATEGORIAS = ['Senior','Femenino','Veterano','Juvenil','Cadete','Inf
 /* Importancia de cada categoría (para decidir la portada y el orden) y categorías
    que solo tienen 3 resultados posibles (ganado / empatado / perdido, sin goles reales) */
 const CATEGORIAS = {
-  'Senior':{peso:10}, 'Femenino':{peso:9}, 'Cadete':{peso:7}, 'Infantil':{peso:7}, 'Veterano':{peso:6}, 'Alevín':{peso:5},
-  'Juvenil':{peso:7}, 'Benjamín':{peso:3, soloResultado:true}, 'Benjamín A':{peso:3, soloResultado:true}, 'Benjamín B':{peso:3, soloResultado:true}, 'Prebenjamín':{peso:2, soloResultado:true}
+  // Factor de relevancia = 0.5 + 0.5·peso/10 → Senior ×1.00, Femenino ×0.95, Veterano ×0.90, el resto ×0.85
+  'Senior':{peso:10}, 'Femenino':{peso:9}, 'Veterano':{peso:8}, 'Cadete':{peso:7}, 'Infantil':{peso:7}, 'Alevín':{peso:7},
+  'Juvenil':{peso:7}, 'Benjamín':{peso:7, soloResultado:true}, 'Benjamín A':{peso:7, soloResultado:true}, 'Benjamín B':{peso:7, soloResultado:true}, 'Prebenjamín':{peso:7, soloResultado:true}
 };
 let SIN_FOTOS = false;
 /* Foto de plantilla por categoría (opcional): se usa en noticias grandes/medianas cuando no llega foto del partido */
@@ -409,7 +410,8 @@ const marcTexto = p => soloResultado(p) ? SELLO[resultadoDe(p)].toLowerCase() : 
    2) × FACTOR de categoría (Senior 1,0 … Prebenjamín 0,6): pesa, pero no aplasta a una gran noticia de cantera
    3) + CONTENIDO: foto y crónica ayudan a lucir la noticia, pero no la inventan
    4) − ROTACIÓN: si fue portada la semana pasada, baja un poco, para que todas las familias tengan su turno
-   Benjamín y Prebenjamín nunca van a portada ni a "Dentro" (no tienen goles reales). */
+   Todos pueden ser portada. Benjamín y Prebenjamín no suman goleada ni hat-trick (su resultado oficial es 1-0/0-0/0-1),
+   pero sí victoria, subida en la tabla, racha, foto y crónica. */
 function relevancia(p){
   const motivos=[]; let noticia=0;
   const sumar=(pts,txt)=>{ noticia+=pts; motivos.push(`${txt} +${pts}`); };
@@ -429,7 +431,7 @@ function relevancia(p){
   if(fotoDe(p)){ total+=2; motivos.push('Foto +2'); }
   if(p.cronica?.texto){ total+=2; motivos.push('Crónica +2'); }
   if((EDICION.portadasAnteriores||[]).includes(p.categoria)){ total-=3; motivos.push('Portada la semana pasada −3'); }
-  return {total: Math.round(total*10)/10, motivos, puedePortada: !soloResultado(p)};
+  return {total: Math.round(total*10)/10, motivos, puedePortada: true};
 }
 const puntuacion = p => relevancia(p).total;
 const listaY = arr => arr.length<=1 ? (arr[0]||'') : arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1];
