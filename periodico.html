@@ -1144,7 +1144,8 @@ function montar(){
   crearClasificaciones(cont);
   numerar(cont);
   // Para el workflow: qué fue portada y qué frases salieron (para no repetirlas las próximas semanas)
-  window.__resultado = { portada: window.__portadaCategoria, frases: [...FRASES_USADAS], paginas: cont.querySelectorAll('.pagina').length };
+  window.__resultado = { portada: window.__portadaCategoria, frases: [...FRASES_USADAS], paginas: cont.querySelectorAll('.pagina').length,
+    relevancia: porImportancia(jugados()).map(p=>{ const r=relevancia(p); return {categoria:p.categoria, total:r.total, motivos:r.motivos, puedePortada:r.puedePortada}; }) };
 }
 if(window.EDICION_REAL) document.querySelector('.panel').style.display='none';
 window.fuentesCargadas = () => document.fonts.ready.then(montar);
