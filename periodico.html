@@ -212,6 +212,7 @@ tr.propio td.eq{color:var(--verde)}
 .sello.E{background:#5b5545;color:#fff}
 .sello.D{background:#fff;color:var(--verde);border-color:var(--verde)}
 .mc .sello{margin-top:12px;font-size:20px;padding:3px 8px}
+.nota-rffm{font-family:var(--serif, Georgia, serif);font-style:italic;font-size:19px;line-height:1.35;color:#6b6457;margin:14px 0 0;padding-top:10px;border-top:1px solid #d8cfbd}
 </style>
 </head>
 <body>
@@ -1069,7 +1070,8 @@ function crearResultados(cont){
   };
   pg.innerHTML = `${barra('Resultados · '+fechasEdicion().corto)}
     <h2 class="titular" style="font-size:60px">La jornada en un vistazo</h2>
-    <div class="res-lista">${ordenar(EDICION.partidos).map(fila).join('')}</div>`;
+    <div class="res-lista">${ordenar(EDICION.partidos).map(fila).join('')}</div>
+    ${EDICION.partidos.some(p=>!p.descansa && soloResultado(p)) ? `<p class="nota-rffm">* En Benjamín y Prebenjamín, por norma de la RFFM, el acta solo recoge si se ganó, empató o perdió (1-0, 0-0 o 0-1) y no publica goleadores. Aquí lo que cuenta es disfrutar y aprender.</p>` : ''}`;
 }
 
 /* Solo el de delante y el de detrás; si es primero, sus dos perseguidores; si es último, los dos de delante.
