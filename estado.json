@@ -1,19 +1,19 @@
 {
-  "numero": 1,
-  "desde": "2026-11-06",
-  "hasta": "2026-11-08",
-  "portada": "Senior",
-  "portadasAnteriores": [],
+  "numero": 2,
+  "desde": "2026-11-13",
+  "hasta": "2026-11-15",
+  "portada": "Cadete",
+  "portadasAnteriores": [
+    "Senior"
+  ],
   "claves": [
-    "Prebenjamín|2026-11-06",
-    "Alevín|2026-11-07",
-    "Infantil|2026-11-07",
-    "Benjamín B|2026-11-07",
-    "Benjamín A|2026-11-07",
-    "Senior|2026-11-08",
-    "Cadete|2026-11-08",
-    "Femenino|2026-11-08",
-    "Veterano|2026-11-08"
+    "Prebenjamín|2026-11-13",
+    "Alevín|2026-11-14",
+    "Infantil|2026-11-14",
+    "Senior|2026-11-15",
+    "Cadete|2026-11-15",
+    "Femenino|2026-11-15",
+    "Veterano|2026-11-15"
   ],
   "incluidos": [
     "Prebenjamín|2026-11-06",
@@ -24,7 +24,14 @@
     "Senior|2026-11-08",
     "Cadete|2026-11-08",
     "Femenino|2026-11-08",
-    "Veterano|2026-11-08"
+    "Veterano|2026-11-08",
+    "Prebenjamín|2026-11-13",
+    "Alevín|2026-11-14",
+    "Infantil|2026-11-14",
+    "Senior|2026-11-15",
+    "Cadete|2026-11-15",
+    "Femenino|2026-11-15",
+    "Veterano|2026-11-15"
   ],
   "frasesRecientes": [
     [
@@ -70,7 +77,48 @@
       "Doblete de {jug}.",
       "El equipo compitió y ya piensa en el siguiente.",
       "¡Que suene el cencerro!"
+    ],
+    [
+      "Doblete de {jugCorto} en el triunfo del {cat}",
+      "Tropiezo del {cat} ante {rival}",
+      "Victoria del {cat} ante {rival}",
+      "El {cat} no puntúa ante {rival}",
+      "Vieron puerta {lista}.",
+      "{jug} marcó por partida doble.",
+      "El equipo encadena {n} jornadas invicto.",
+      "como visitante",
+      "Victoria solvente del {cat} {lugar}: {marc} contra {rival}.",
+      "El equipo jugó con cabeza y con corazón.",
+      "¡Los lobos nunca se rinden!",
+      "en Peñalta, arropado por su gente",
+      "Jornada complicada para el {cat} {lugar} contra {rival} ({marc}).",
+      "Hat-trick de {jug}, que no perdonó.",
+      "El {cat} gana posiciones y ya es {n}º.",
+      "Toca levantarse y seguir trabajando.",
+      "¡Aúpa Villa!",
+      "ejerciendo de local",
+      "Los peques del {cat} se llevaron el partido {lugar} ante {rival}.",
+      "El equipo sube hasta la {n}ª posición.",
+      "Compañerismo y ganas: eso es lo que cuenta.",
+      "¡Esto es el Villa!",
+      "Partido de aprendizaje para el {cat}",
+      "jugando como local",
+      "El {cat} cayó por la mínima {lugar} ante {rival} ({marc}).",
+      "La semana que viene, nueva oportunidad.",
+      "¡A por la próxima!",
+      "El {cat} compite ante {rival}",
+      "en casa, en Peñalta",
+      "El {cat} se encontró {lugar} con un rival muy sólido y cayó por {marc}.",
+      "{jug} vio puerta en dos ocasiones.",
+      "El equipo tuvo que sobreponerse a una expulsión.",
+      "De estos partidos también se aprende.",
+      "¡Vamos Buitrago!",
+      "El {cat} se queda sin premio",
+      "en campo ajeno",
+      "El {cat} lo intentó hasta el final, pero no pudo puntuar {lugar} ante {rival} ({marc}).",
+      "Los lobos nunca se rinden: a por la próxima.",
+      "¡Vamos verdes!"
     ]
   ],
-  "actualizado": "2026-11-11T13:45:31.778Z"
+  "actualizado": "2026-11-16T09:26:00.735Z"
 }
