@@ -83,13 +83,6 @@
       "Tropiezo del {cat} ante {rival}",
       "Victoria del {cat} ante {rival}",
       "El {cat} no puntúa ante {rival}",
-      "Vieron puerta {lista}.",
-      "{jug} marcó por partida doble.",
-      "El equipo encadena {n} jornadas invicto.",
-      "como visitante",
-      "Victoria solvente del {cat} {lugar}: {marc} contra {rival}.",
-      "El equipo jugó con cabeza y con corazón.",
-      "¡Los lobos nunca se rinden!",
       "en Peñalta, arropado por su gente",
       "Jornada complicada para el {cat} {lugar} contra {rival} ({marc}).",
       "Hat-trick de {jug}, que no perdonó.",
@@ -100,7 +93,7 @@
       "Los peques del {cat} se llevaron el partido {lugar} ante {rival}.",
       "El equipo sube hasta la {n}ª posición.",
       "Compañerismo y ganas: eso es lo que cuenta.",
-      "¡Esto es el Villa!",
+      "¡Los lobos nunca se rinden!",
       "Partido de aprendizaje para el {cat}",
       "jugando como local",
       "El {cat} cayó por la mínima {lugar} ante {rival} ({marc}).",
@@ -120,5 +113,5 @@
       "¡Vamos verdes!"
     ]
   ],
-  "actualizado": "2026-11-16T09:41:25.734Z"
+  "actualizado": "2026-11-16T19:09:31.325Z"
 }
