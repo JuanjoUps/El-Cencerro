@@ -1041,6 +1041,7 @@ function crearPortada(cont){
     : `${jugados().length} partidos, crónicas, goleadores y clasificaciones de todo el club.`;
   const listaDentro = manual ? ps.slice(0,3) : otras;
   window.__portadaCategoria = manual ? 'manual' : lider?.categoria || null;
+  window.__portadaTitular = titularPortada || '';
   const pg = nuevaPagina(cont,'portada');
   pg.innerHTML = `
     <div class="cabecera">${escudo(VILLA)}<div><div class="nombre">${esc(CABECERA)}</div><div class="lema">${esc(LEMA)}</div></div>${escudo(VILLA)}</div>
@@ -1148,7 +1149,7 @@ function montar(){
   crearClasificaciones(cont);
   numerar(cont);
   // Para el workflow: qué fue portada y qué frases salieron (para no repetirlas las próximas semanas)
-  window.__resultado = { portada: window.__portadaCategoria, frases: [...FRASES_USADAS], paginas: cont.querySelectorAll('.pagina').length,
+  window.__resultado = { portada: window.__portadaCategoria, titularPortada: window.__portadaTitular || '', frases: [...FRASES_USADAS], paginas: cont.querySelectorAll('.pagina').length,
     relevancia: porImportancia(jugados()).map(p=>{ const r=relevancia(p); return {categoria:p.categoria, total:r.total, motivos:r.motivos, puedePortada:r.puedePortada}; }) };
 }
 if(window.EDICION_REAL) document.querySelector('.panel').style.display='none';
