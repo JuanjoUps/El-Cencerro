@@ -587,13 +587,33 @@ async function main() {
   fs.writeFileSync(path.join(salida, 'edicion.js'), `// Generado por construir-edicion.js — no editar a mano\nwindow.EDICION_REAL = ${JSON.stringify(edicion, null, 1)};\n`);
   fs.writeFileSync(path.join(salida, 'meta.json'), JSON.stringify({ numero, esNueva, desde, hasta, portadasAnteriores, claves, incluidos: incluidosNuevos }, null, 2));
 
-  // Texto sugerido para el pie de la publicación de Instagram
-  const sello = p => { const r = resultado(p); return r === 'V' ? 'victoria' : r === 'E' ? 'empate' : 'derrota'; };
-  const linea = p => /benjam/i.test(p.categoria)
-    ? `${p.categoria}: ${sello(p)} ante ${nombrePie(p.somosLocal ? p.visitante.nombre : p.local.nombre)}`
-    : `${p.categoria}: ${nombrePie(p.local.nombre)} ${p.golesLocal}-${p.golesVisitante} ${nombrePie(p.visitante.nombre)}`;
-  const pie = [`🔔 El Cencerro de la Sede · Nº ${numero}`, '', 'Toda la jornada del club en un vistazo 👉 desliza', '',
-    ...partidos.map(linea).filter(Boolean), '', '#ElCencerroDeLaSede #LaHuellaDelVilla #VillaDeBuitrago'].join('\n');
+  // Texto sugerido para el pie de Instagram. La primera línea ({{GANCHO}}) la pone cerrar-edicion.js con el titular de portada.
+  // Pensado para que enganche en las 2 líneas que se ven sin pulsar "más" y para provocar guardados, compartidos y etiquetas.
+  const ORDEN_PIE = ['Senior', 'Femenino', 'Veterano', 'Juvenil', 'Cadete', 'Infantil', 'Alevín', 'Benjamín A', 'Benjamín B', 'Benjamín', 'Prebenjamín'];
+  const rival = p => nombrePie(p.somosLocal ? p.visitante.nombre : p.local.nombre)
+    .replace(/\s*'[A-Za-z]'\s*$/, '').replace(/^([A-Z]\.){2,}\s*/, '').replace(/\s+(C\.?F\.?|F\.?C\.?)$/i, '').trim();
+  const bola = r => r === 'V' ? '🟢' : r === 'E' ? '🟡' : '⚪';
+  const linea = p => {
+    const r = resultado(p), lugar = p.somosLocal ? 'ante' : 'en';
+    if (/benjam/i.test(p.categoria)) return `${bola(r)} ${p.categoria} · ${r === 'V' ? 'victoria' : r === 'E' ? 'empate' : 'derrota'} ${lugar} ${rival(p)}`;
+    const nos = p.somosLocal ? p.golesLocal : p.golesVisitante, ellos = p.somosLocal ? p.golesVisitante : p.golesLocal;
+    return `${bola(r)} ${p.categoria} · ${nos}-${ellos} ${lugar} ${rival(p)}`;
+  };
+  const pos = c => { const i = ORDEN_PIE.indexOf(c); return i < 0 ? 99 : i; };
+  const ordenados = [...partidos].sort((x, y) => pos(x.categoria) - pos(y.categoria));
+  const conCronica = partidos.filter(p => p.cronica).map(p => p.categoria);
+  const dentro = [
+    `⚽ ${partidos.length} partidos${conCronica.length ? `, con la crónica del ${conCronica.join(' y del ')}` : ''}`,
+    ...noticias.filter(n => n.tipo !== 'portada').map(n => `📰 ${n.titular}`),
+    clasificaciones.length ? '📊 Cómo van todos los equipos y a quién les toca el finde' : ''
+  ].filter(Boolean);
+  const pie = ['{{GANCHO}}', '',
+    `🔔 El Cencerro de la Sede · Nº ${numero}. Toda la jornada del Villa en un carrusel 👉`, '',
+    ...ordenados.map(linea), '',
+    'Dentro:', ...dentro, '',
+    '👇 Etiqueta a quien jugó este fin de semana',
+    '📲 Compártelo con la familia y guárdalo para tenerlo a mano', '',
+    '#ElCencerroDeLaSede #LaHuellaDelVilla #VillaDeBuitrago #BuitragoDelLozoya #SierraNorte #FutbolBase #FutbolMadrid'].join('\n');
   fs.writeFileSync(path.join(salida, 'pie-instagram.txt'), pie);
 
   log(`✅ Edición lista: ${partidos.length} partidos, ${extras.length} descansos/pendientes, ${clasificaciones.length} clasificaciones, ${Object.keys(proximos).length} próximos`);
