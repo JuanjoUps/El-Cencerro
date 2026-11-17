@@ -59,7 +59,13 @@ fs.rmSync(ULTIMO, { recursive: true, force: true });
 fs.mkdirSync(ULTIMO, { recursive: true });
 const paginas = fs.readdirSync(R('salida')).filter(f => /^pagina-\d+\.png$/.test(f)).sort();
 paginas.forEach(f => fs.copyFileSync(R('salida', f), path.join(ULTIMO, f)));
-if (fs.existsSync(R('salida', 'pie-instagram.txt'))) fs.copyFileSync(R('salida', 'pie-instagram.txt'), path.join(ULTIMO, 'pie-instagram.txt'));
+if (fs.existsSync(R('salida', 'pie-instagram.txt'))) {
+  // Primera línea del pie = titular de portada (es lo único que se ve sin pulsar "más")
+  const titular = String(res.titularPortada || '').trim();
+  const gancho = titular ? `🔥 ${titular}${/[.!?…]$/.test(titular) ? '' : '.'}` : '🔥 Así fue el fin de semana del Villa.';
+  const pie = fs.readFileSync(R('salida', 'pie-instagram.txt'), 'utf8').replace('{{GANCHO}}', gancho);
+  fs.writeFileSync(path.join(ULTIMO, 'pie-instagram.txt'), pie);
+}
 // Puntuación de relevancia (para mandarla a Telegram y ver por qué salió cada noticia donde salió)
 if (Array.isArray(res.relevancia) && res.relevancia.length) {
   const medallas = ['🥇', '🥈', '🥉'];
