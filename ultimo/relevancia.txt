@@ -1,16 +1,20 @@
-📊 Relevancia · Cencerro Nº 2
+📊 Relevancia · Cencerro Nº 3
 
-🥇 Cadete: 6.6  ← PORTADA
-     Victoria +2 · Racha +1 · × 0.85 categoría · Foto +2 · Crónica +2
-🥈 Femenino: 3.8
-     Sube en la tabla +2 · Hat-trick +2 · × 0.95 categoría
-🥉 Prebenjamín: 3.4
-     Sube en la tabla +2 · Victoria +2 · × 0.85 categoría
-▫️ Senior: 1
-     × 1.00 categoría · Foto +2 · Crónica +2 · Portada la semana pasada −3
-▫️ Alevín: 0
-     × 0.85 categoría
-▫️ Infantil: 0
-     × 0.85 categoría
-▫️ Veterano: 0
-     × 0.90 categoría
+🥇 Infantil: 10  ← PORTADA
+     Victoria +2 · Goleada +3 · Hat-trick +2 · × 0.85 categoría · Foto +2 · Crónica +2
+🥈 Prebenjamín: 5.7
+     Victoria +2 · × 0.85 categoría · Foto +2 · Crónica +2
+🥉 Alevín: 5.7
+     Victoria +2 · × 0.85 categoría · Foto +2 · Crónica +2
+▫️ Benjamín A: 5.4
+     Sube en la tabla +2 · Victoria +2 · × 0.85 categoría · Foto +2
+▫️ Veterano: 3.8
+     Victoria +2 · × 0.90 categoría · Foto +2
+▫️ Cadete: 3.6
+     Victoria +2 · Racha +1 · × 0.85 categoría · Foto +2 · Crónica +2 · Portada la semana pasada −3
+▫️ Benjamín B: 2
+     × 0.85 categoría · Foto +2
+▫️ Benjamín B: 2
+     × 0.85 categoría · Foto +2
+▫️ Senior: 2
+     × 1.00 categoría · Foto +2

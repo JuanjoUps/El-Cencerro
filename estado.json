@@ -1,19 +1,21 @@
 {
-  "numero": 2,
-  "desde": "2026-11-13",
-  "hasta": "2026-11-15",
-  "portada": "Cadete",
+  "numero": 3,
+  "desde": "2026-11-14",
+  "hasta": "2026-11-22",
+  "portada": "Infantil",
   "portadasAnteriores": [
-    "Senior"
+    "Cadete"
   ],
   "claves": [
-    "Prebenjamín|2026-11-13",
-    "Alevín|2026-11-14",
-    "Infantil|2026-11-14",
-    "Senior|2026-11-15",
-    "Cadete|2026-11-15",
-    "Femenino|2026-11-15",
-    "Veterano|2026-11-15"
+    "Benjamín B|2026-11-14",
+    "Prebenjamín|2026-11-20",
+    "Alevín|2026-11-21",
+    "Cadete|2026-11-21",
+    "Benjamín B|2026-11-21",
+    "Benjamín A|2026-11-21",
+    "Infantil|2026-11-22",
+    "Senior|2026-11-22",
+    "Veterano|2026-11-22"
   ],
   "incluidos": [
     "Prebenjamín|2026-11-06",
@@ -31,7 +33,16 @@
     "Senior|2026-11-15",
     "Cadete|2026-11-15",
     "Femenino|2026-11-15",
-    "Veterano|2026-11-15"
+    "Veterano|2026-11-15",
+    "Benjamín B|2026-11-14",
+    "Prebenjamín|2026-11-20",
+    "Alevín|2026-11-21",
+    "Cadete|2026-11-21",
+    "Benjamín B|2026-11-21",
+    "Benjamín A|2026-11-21",
+    "Infantil|2026-11-22",
+    "Senior|2026-11-22",
+    "Veterano|2026-11-22"
   ],
   "frasesRecientes": [
     [
@@ -111,7 +122,42 @@
       "El {cat} lo intentó hasta el final, pero no pudo puntuar {lugar} ante {rival} ({marc}).",
       "Los lobos nunca se rinden: a por la próxima.",
       "¡Vamos verdes!"
+    ],
+    [
+      "Tarde de goles para el {cat}",
+      "Sonrisas en el {cat}",
+      "Alegría verde ante {rival}",
+      "El {cat} se lleva el partido",
+      "El {cat} gana posiciones y ya es {n}º.",
+      "como visitante",
+      "Alegría para el {cat}, que ganó {lugar} contra {rival}.",
+      "Los peques siguen aprendiendo a lo grande.",
+      "¡Vamos Buitrago!",
+      "{jugCorto}, protagonista con dos goles",
+      "Los goles llevaron la firma de {lista}.",
+      "{jug} firmó un doblete.",
+      "en su feudo de Peñalta",
+      "El {cat} hizo los deberes {lugar}: {marc} ante {rival}.",
+      "El cencerro suena fuerte esta semana.",
+      "¡Orgullo verde!",
+      "{jugCorto} guía al {cat} ante {rival}",
+      "Partido de aprendizaje para el {cat}",
+      "jugando como local",
+      "El {cat} no pudo ganar {lugar} contra {rival}, pero disfrutó del partido.",
+      "Disfrutar, aprender y compartir: así se crece.",
+      "¡A por la próxima!",
+      "El {cat} compite ante {rival}",
+      "fuera de casa",
+      "El {cat} cayó {lugar} ante {rival}; lo importante es seguir aprendiendo.",
+      "Cada partido es un paso más para estos pequeños lobos.",
+      "¡A seguir currando!",
+      "Tropiezo del {cat} ante {rival}",
+      "{jug} fue quien encontró la red.",
+      "en Peñalta",
+      "El {cat} no pudo puntuar {lugar} ante {rival} ({marc}).",
+      "El grupo está unido y eso es lo más importante.",
+      "¡Esto es el Villa!"
     ]
   ],
-  "actualizado": "2026-11-17T17:25:51.912Z"
+  "actualizado": "2026-11-23T19:08:34.027Z"
 }
