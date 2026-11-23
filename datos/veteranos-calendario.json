@@ -1,6 +1,6 @@
 {
   "equipo": "928399",
-  "actualizado": "2026-11-16T07:25:35.504Z",
+  "actualizado": "2026-11-23T08:18:24.547Z",
   "formato": "[fecha,rival,esLocal,terminado,golesPropio,golesRival,hora,jornada]",
   "campoEnColumna9": "el elemento 9 de cada fila (índice 8) es el campo según SofaScore; vacío si no lo trae",
   "partidos": [
@@ -74,9 +74,9 @@
       "2026-11-22",
       "Tres Cantos UD-Base-CDF",
       1,
-      0,
-      null,
-      null,
+      1,
+      4,
+      2,
       "10:00",
       8,
       "Campo de Fútbol Municipal Buytrago de Lozoya"
