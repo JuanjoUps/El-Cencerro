@@ -138,6 +138,8 @@ body{background:#262626;color:#eee;font-family:system-ui,-apple-system,sans-seri
 .art.manual .cuerpo-art{grid-template-columns:1fr !important}
 .art.manual .kicker{background:var(--oro);color:var(--verde)}
 .art.breve.manual .foto{height:220px}
+.art.breve.confoto .foto{height:215px;margin:6px 0 8px}
+.art.breve.confoto .firma{font-size:15px;margin-bottom:4px}
 .art.mediana.manual .foto{height:320px}
 .portada .cabecera > div{min-width:0}
 .portada .nombre{overflow:hidden;font-family:'Abril Fatface','Playfair Display',Georgia,serif;font-size:118px;letter-spacing:1px;line-height:1;text-align:center;white-space:nowrap}
@@ -270,7 +272,8 @@ let SIN_FOTOS = false;
 /* Foto de plantilla por categoría (opcional): se usa en noticias grandes/medianas cuando no llega foto del partido */
 const FOTOS_ARCHIVO = { /* 'Senior': 'fotos-archivo/senior.jpg' */ };
 const CIERRES = ['¡Vamos verdes!','¡Somos el Villa!','¡Vamos Buitrago!'];
-const PALABRAS_GRANDE = 110;   // crónica a partir de estas palabras = noticia grande
+const PALABRAS_GRANDE = 110;   // crónica a partir de estas palabras = noticia grande (3 columnas)
+const PALABRAS_MEDIANA = 60;   // crónica a partir de estas palabras = mediana (2 columnas); por debajo, tarjeta de 1 columna
 let MOSTRAR_PATROCINADOR = false;
 
 /* ================= DATOS DE EJEMPLO ================= */
@@ -811,7 +814,8 @@ window.encajarFoto = img => {
 function tipoDe(p){
   const palabras = p.cronica?.texto ? limpiarCronica(p.cronica.texto).join(' ').split(/\s+/).length : 0;
   if(palabras >= PALABRAS_GRANDE) return 'grande';
-  if(p.cronica?.texto || fotoDe(p)) return 'mediana';
+  if(palabras >= PALABRAS_MEDIANA) return 'mediana';
+  if(p.cronica?.texto || fotoDe(p)) return 'foto';   // tarjeta de 1 columna con foto y texto corto
   return 'breve';
 }
 function marcadorHTML(p){
@@ -831,7 +835,9 @@ function infoKicker(p){
 
 function crearArticulo(p, tipo, anchoCols){
   const art = document.createElement('article');
-  art.className = 'art '+tipo;
+  const tarjeta = tipo==='foto';
+  if(tarjeta) tipo = 'breve';
+  art.className = 'art '+tipo+(tarjeta?' confoto':'');
   const titular = p.cronica?.titular || generarTitular(p);
   const gol = textoGoleadores(p);
   const golHTML = gol ? `<div class="goleadores"><b>Goles:</b> ${esc(gol)}</div>` : '';
@@ -840,7 +846,7 @@ function crearArticulo(p, tipo, anchoCols){
   const dato = datoDestacado(p);
   const datoHTML = dato && tipo!=='breve' ? `<div class="dato"><div class="et">EL DATO</div><div class="txt">${esc(dato)}</div></div>` : '';
   const conCronica = !!p.cronica?.texto;
-  const parrafos = tipo==='breve' ? generarBreve(p) : (conCronica ? limpiarCronica(p.cronica.texto) : generarCronica(p));
+  const parrafos = conCronica ? limpiarCronica(p.cronica.texto) : (tipo==='breve' ? generarBreve(p) : generarCronica(p));
   const firma = conCronica ? `Crónica: <b>${esc(p.cronica.autor)}</b>` : '';
   // Foto del partido; si el equipo no ha mandado ninguna, la de archivo de la plantilla (si existe)
   const foto = fotoDe(p) || (SIN_FOTOS ? null : FOTOS_ARCHIVO[p.categoria]) || null;
@@ -852,8 +858,9 @@ function crearArticulo(p, tipo, anchoCols){
       <div class="kicker-info" style="margin:-4px 0 6px">${infoKicker(p)}</div>
       <h3 class="titular">${esc(titular)}</h3>
       ${marcadorHTML(p)}${golHTML}
+      ${tarjeta && foto ? fotoHTML(foto, '') : ''}${tarjeta && firma ? `<div class="firma">${firma}</div>` : ''}
       <div class="cronica continua"></div>
-      ${fichaHTML(p)}${clHTML}`;
+      ${tarjeta && foto ? '' : fichaHTML(p)}${clHTML}`;
   } else {
     art.innerHTML = `
       <div class="kicker-fila"><span class="kicker">${esc(p.categoria)}</span><span class="kicker-info">${infoKicker(p)}</span></div>
@@ -913,11 +920,11 @@ const anchoSpan = s => s*COL + (s-1)*GAP;
 /* Cada partido es una "pieza" que ocupa 3, 2 o 1 columnas según lo que tenga */
 function construirPiezas(){
   const ps = porImportancia(jugados()).map(p=>({p, tipo:tipoDe(p)}));
-  const span = {grande:3, mediana:2, breve:1};
+  const span = {grande:3, mediana:2, foto:1, breve:1};
   // Noticias a mano: la de portada va dentro como grande (si tiene texto); secundaria = mediana; normal = breve
   const manuales = (EDICION.noticias||[]).filter(n=>n.tipo!=='portada' || n.texto)
     .map(n=>({n, tipo: n.tipo==='portada' ? 'grande' : n.tipo==='secundaria' ? 'mediana' : 'breve'}));
-  const piezas = ['grande','mediana','breve'].flatMap(t => [
+  const piezas = ['grande','mediana','foto','breve'].flatMap(t => [
     ...manuales.filter(x=>x.tipo===t).map(x=>({el:crearNoticiaManual(x.n, t, anchoSpan(span[t])), span:span[t]})),
     ...ps.filter(x=>x.tipo===t).map(x=>({el:crearArticulo(x.p, t, anchoSpan(span[t])), span:span[t]}))
   ]);
@@ -978,31 +985,41 @@ function situar(el, c, y, span){
   el.style.width = (anchoSpan(span) + (c>0 ? GAP/2 : 0))+'px';
   el.style.top = y+'px';
 }
+/* Coloca las piezas por orden de importancia, pero si una no cabe en el hueco que queda,
+   prueba con las siguientes antes de abrir otra página: así no quedan columnas vacías */
 function paginar(cont, piezas){
-  let pag = nuevaInterior(cont);
   const cola = [...piezas];
   while(cola.length){
-    const pz = cola.shift(), el = pz.el, H = pag.cuerpo.clientHeight;
-    const {c, y} = mejorHueco(pag.alturas, pz.span);
-    el.style.height='';
-    pag.cuerpo.appendChild(el); situar(el, c, y, pz.span); prepararPieza(el);
-    const h = el.offsetHeight, partible = !!el.dataset.partible;
-    const paginaVacia = pag.alturas.every(a=>a===0);
-    let final = y + h;
-    if(final > H){
-      if(partible && (H - y >= 520 || paginaVacia)){
-        // Crónica larga: ocupa el alto que queda, ajusta letra y lo que no quepa sigue en la página siguiente
-        el.style.height = (H - y)+'px';
-        let resto = textoAjustado(el.querySelector('.cronica'), el._tokens, el._opts);
-        // Si solo sobran unas pocas palabras, se aprieta un poco la letra antes que abrir otra página para una línea
-        if(resto.length && resto.length < 45) resto = textoAjustado(el.querySelector('.cronica'), el._tokens, {...el._opts, min: 17});
-        if(resto.length) cola.unshift({el:crearContinuacion(el, resto, ANCHO_CUERPO), span:3});
-        final = H;
-      } else if(!paginaVacia){
-        el.remove(); pag = nuevaInterior(cont); cola.unshift(pz); continue;
+    const pag = nuevaInterior(cont), H = pag.cuerpo.clientHeight;
+    let colocada = true;
+    while(colocada && cola.length){
+      colocada = false;
+      for(let i=0; i<cola.length; i++){
+        const pz = cola[i], el = pz.el;
+        const {c, y} = mejorHueco(pag.alturas, pz.span);
+        if(y >= H - 120) continue;
+        el.style.height='';
+        pag.cuerpo.appendChild(el); situar(el, c, y, pz.span); prepararPieza(el);
+        const h = el.offsetHeight, partible = !!el.dataset.partible;
+        const paginaVacia = pag.alturas.every(a=>a===0);
+        let final = y + h, sustituta = null;
+        if(final > H){
+          if(partible && (H - y >= 520 || paginaVacia)){
+            // Crónica larga: ocupa el alto que queda, ajusta letra y lo que no quepa sigue en la página siguiente
+            el.style.height = (H - y)+'px';
+            let resto = textoAjustado(el.querySelector('.cronica'), el._tokens, el._opts);
+            if(resto.length && resto.length < 45) resto = textoAjustado(el.querySelector('.cronica'), el._tokens, {...el._opts, min: 17});
+            if(resto.length) sustituta = {el:crearContinuacion(el, resto, ANCHO_CUERPO), span:3};
+            final = H;
+          } else if(!paginaVacia){ el.remove(); continue; }
+        }
+        cola.splice(i, 1);
+        if(sustituta) cola.unshift(sustituta);   // lo que sigue de la crónica abre la página siguiente
+        for(let k=c;k<c+pz.span;k++) pag.alturas[k] = final + SEP_V;
+        colocada = true;
+        break;
       }
     }
-    for(let k=c;k<c+pz.span;k++) pag.alturas[k] = final + SEP_V;
   }
 }
 
