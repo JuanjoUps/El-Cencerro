@@ -565,7 +565,11 @@ async function main() {
   const cronicas = leerListas('cronicas.json', dirArchivo);
   const noticias = leerListas('noticias.json', dirArchivo).filter(n => n && n.titular);
   const fotos = fotosDisponibles(dirArchivo);
+  // Si un equipo jugó dos partidos en este número (un aplazado), la foto y la crónica van solo al más reciente
+  const ultimoDe = new Map();
+  for (const p of partidos) if (!ultimoDe.has(p.categoria) || p.fecha > ultimoDe.get(p.categoria).fecha) ultimoDe.set(p.categoria, p);
   for (const p of partidos) {
+    if (ultimoDe.get(p.categoria) !== p) continue;
     const cr = cronicas.find(c => (categoriaDe(c.categoria) || c.categoria) === p.categoria && c.texto);
     if (cr) p.cronica = { autor: cr.autor || `Entrenador del ${p.categoria}`, titular: cr.titular || null, texto: cr.texto };
     const s = slug(p.categoria);
